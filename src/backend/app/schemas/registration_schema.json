@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "UserRegistration",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "surname": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "dateOfBirth": {
+        "type": "string",
+        "format": "date"
+      },
+      "gender": {
+        "type": "string",
+        "enum": ["male", "female", "other"]
+      },
+      "email": {
+        "type": "string",
+        "format": "email"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 6
+      }
+    },
+    "required": ["name", "surname", "dateOfBirth", "gender", "email", "password"],
+    "additionalProperties": false
+  }
+  
