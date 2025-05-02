@@ -21,7 +21,7 @@ class UserController:
             )
         
         self.bp.add_url_rule(
-            '/users/register', 
+            '/users/signup', 
             view_func=self.register_user, 
             methods=['POST']
             )

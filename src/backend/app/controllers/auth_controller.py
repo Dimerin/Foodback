@@ -61,13 +61,11 @@ class AuthController:
         refresh_token = create_refresh_token(identity=str(user.id))
         
         return make_response(jsonify({
-            "access_token": access_token,
-            "refresh_token": refresh_token,
+            "id": user.id,
+            "email": user.email,
             "token_type": "Bearer",
-            "user": {
-                "id": user.id,
-                "email": user.email
-            }
+            "access_token": access_token,
+            "refresh_token": refresh_token
         }), 200)
         
     def refresh_token(self):
