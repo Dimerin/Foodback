@@ -1,0 +1,10 @@
+mysql-connector-python
+Flask-SQLAlchemy==3.1.1
+Flask==3.0.3
+Flask-RESTful==0.3.10
+Flask-JWT-Extended==4.7.1
+PyMySQL==1.1.1
+mysql-connector-python==9.3.0
+cryptography==44.0.2
+jsonschema==4.23.0
+jsonschema-specifications==2025.4.1
