@@ -61,6 +61,15 @@ dependencies {
 
     // Lottie
     implementation ("com.airbnb.android:lottie:6.6.6")
+    implementation("com.airbnb.android:lottie-compose:4.0.0")
+
+    // Mindrove SDK
+    implementation(files("libs/mindRove-release_v2_0.aar"))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to
+            listOf("*.jar", "*.aar"))))
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.compose.runtime:runtime:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
