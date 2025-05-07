@@ -4,7 +4,8 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Environment
+import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,7 @@ import javax.inject.Inject
 
 sealed class TastingNavigationEvents {
     data object Finished : TastingNavigationEvents()
+    data class ShareCsvFile(val uri: Uri) : TastingNavigationEvents()
     data class Error(val message: String) : TastingNavigationEvents()
 }
 
@@ -43,6 +45,7 @@ class TastingViewModel @Inject constructor(
     val eventsFlow: SharedFlow<TastingNavigationEvents> = _eventsFlow
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
+
 
     private var serverManager: ServerManager? = null
 
@@ -68,6 +71,7 @@ class TastingViewModel @Inject constructor(
                     return
                 }
                 buffer.clear()
+                _state.value = _state.value.copy(rating = "") // Reset the rating
                 startSession()
                 runProtocol()
             }
@@ -85,6 +89,10 @@ class TastingViewModel @Inject constructor(
             is TastingEvent.DeleteCsv -> {
                 deleteCsvFile()
             }
+
+            is TastingEvent.ShareCsv -> {
+                shareCsvFile(context)
+            }
         }
     }
 
@@ -93,10 +101,17 @@ class TastingViewModel @Inject constructor(
             if (_state.value.stage == TastingStage.Recording) {
                 buffer += sensorData
                 _state.value = _state.value.copy(sensorData = buffer.toList())
-            }
+
+                // Debugging sensor data
+               /* println("Received SensorData: packet=${sensorData.numberOfMeasurement}, " +
+                        "ch1=${sensorData.channel1}, ch2=${sensorData.channel2}, " +
+                        "ch3=${sensorData.channel3}, ch4=${sensorData.channel4}, " +
+                        "ch5=${sensorData.channel5}, ch6=${sensorData.channel6}")*/
+            } 
         }
         serverManager?.start()
     }
+
 
     private fun runProtocol() {
         job = viewModelScope.launch(ioDispatcher) {
@@ -133,8 +148,21 @@ class TastingViewModel @Inject constructor(
             try {
                 if (buffer.isEmpty()) {
                     _eventsFlow.emit(TastingNavigationEvents.Error("No sensor data to save. Check the Mindrove connection."))
+                    _state.value = _state.value.copy(stage = TastingStage.Idle)
+                    _state.value = _state.value.copy(rating = "")
                     return@launch
                 }
+
+                val folder = File(context.getExternalFilesDir(null), "Foodback")
+                if (!folder.exists()) {
+                    folder.mkdirs()
+                }
+
+                val file = File(folder, "eeg_tasting_data.csv")
+
+
+                val experimentNumber = getExperimentNumber(file)
+
                 val rows = buffer.map { sd ->
                     listOf(
                         sd.numberOfMeasurement.toString(),
@@ -144,17 +172,14 @@ class TastingViewModel @Inject constructor(
                         sd.channel4.toString(),
                         sd.channel5.toString(),
                         sd.channel6.toString(),
+                        experimentNumber.toString(),
                         subject,
                         rating.toString()
                     ).joinToString(",")
                 }
 
-                val file = File(
-                    Environment.getExternalStorageDirectory(),
-                    "Foodback/eeg_tasting_data.csv"
-                )
                 if (!file.exists()) {
-                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,subject,rating\n")
+                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating\n")
                 }
                 file.appendText(rows.joinToString("\n", "\n"))
 
@@ -170,13 +195,20 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    private fun getExperimentNumber(file: File): Int {
+        if (!file.exists() || file.readText().isBlank()) {
+            return 1
+        }
+
+        val lastLine = file.readLines().lastOrNull()
+        return lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
+    }
+
     private fun deleteCsvFile() {
         viewModelScope.launch(ioDispatcher) {
             try {
-                val file = File(
-                    Environment.getExternalStorageDirectory(),
-                    "Foodback/eeg_tasting_data.csv"
-                )
+                val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
+
                 if (file.exists()) {
                     if (file.delete()) {
                         _eventsFlow.emit(TastingNavigationEvents.Error("CSV file deleted successfully."))
@@ -189,6 +221,26 @@ class TastingViewModel @Inject constructor(
             } catch (e: Exception) {
                 _eventsFlow.emit(TastingNavigationEvents.Error("Failed to delete CSV file: ${e.message}"))
             }
+        }
+    }
+
+    private fun shareCsvFile(context: Context) {
+        val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
+        if (!file.exists()) {
+            viewModelScope.launch {
+                _eventsFlow.emit(TastingNavigationEvents.Error("CSV file does not exist."))
+            }
+            return
+        }
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "unipi.msss.foodback.fileprovider",
+            file
+        )
+
+        viewModelScope.launch {
+            _eventsFlow.emit(TastingNavigationEvents.ShareCsvFile(uri))
         }
     }
 
