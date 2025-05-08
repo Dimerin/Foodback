@@ -7,12 +7,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import org.json.JSONArray
+import org.json.JSONObject
 
 object DataSender {
 
-    fun sendHeartRateStats(context: Context, avg: Double, std: Double) {
+    fun sendSensorData(context: Context, heartRates: List<Float>, edaValues: List<Float>) {
         val client = Wearable.getMessageClient(context)
-        val message = "avg:$avg;stdev:$std"
+
+        val json = JSONObject().apply {
+            put("heart_rate", JSONArray(heartRates))
+            put("eda", JSONArray(edaValues))
+        }
+        val message = json.toString()
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -24,7 +31,7 @@ object DataSender {
                         try {
                             val result = client.sendMessage(
                                 node.id,
-                                "/sensor_data",
+                                "/sensor_series",
                                 message.toByteArray()
                             ).await()
                             Log.d("DataSender", "Sent to ${node.displayName}: $message (Result: $result)")
@@ -39,3 +46,4 @@ object DataSender {
         }
     }
 }
+

@@ -7,16 +7,23 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import it.unipi.msss.wear.ui.HeartRateScreen
+import it.unipi.msss.wear.viewmodel.HeartRateViewModel
+import it.unipi.msss.wear.viewmodel.HeartRateViewModelFactory
 
 class MainActivity : ComponentActivity() {
+    private val heartRateViewModel : HeartRateViewModel by viewModels {
+        HeartRateViewModelFactory(applicationContext)
+    }
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 Toast.makeText(this, "Permesso concesso", Toast.LENGTH_SHORT).show()
                 setContent {
-                    HeartRateScreen()
+                    HeartRateScreen(viewModel = heartRateViewModel)
                 }
             } else {
                 Toast.makeText(this, "Permesso negato", Toast.LENGTH_SHORT).show()
@@ -33,7 +40,7 @@ class MainActivity : ComponentActivity() {
             ) == PackageManager.PERMISSION_GRANTED -> {
                 // Il permesso è già concesso, procedi con la logica
                 setContent {
-                    HeartRateScreen()
+                    HeartRateScreen(viewModel = heartRateViewModel)
                 }
             }
             else -> {

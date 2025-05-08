@@ -12,12 +12,13 @@ class HeartRateMessageListener : MessageClient.OnMessageReceivedListener {
 
     companion object {
         const val TAG = "HeartRateListener"
-        const val PATH = "/sensor_data"
+        const val PATH = "/sensor_series"
 
         val heartRateFlow = MutableSharedFlow<Pair<Double, Double>>()  // (avg, stdev)
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
+        Log.d(TAG, "$messageEvent")
         if (messageEvent.path == PATH) {
             val message = String(messageEvent.data)
             Log.d(TAG, "Messaggio ricevuto: $message")

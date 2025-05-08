@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -15,8 +16,10 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import it.unipi.msss.wear.viewmodel.HeartRateViewModel
 
+
 @Composable
 fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
 
     Box(
@@ -56,14 +59,16 @@ fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
                     style = MaterialTheme.typography.body2
                 )
             } else {
-                Button(onClick = { viewModel.startCollection() }) {
+                Button(onClick = { viewModel.startCollection(context) }) {
                     Text("Avvia rilevamento")
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = { viewModel.saveData() }) {
+            Button(onClick = {
+                viewModel.saveData(context = context)
+            }) {
                 Text("Salva dati")
             }
 

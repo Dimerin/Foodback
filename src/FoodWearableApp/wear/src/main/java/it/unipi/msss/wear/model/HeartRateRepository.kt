@@ -5,37 +5,60 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class HeartRateRepository(private val context: Context) {
 
+    companion object {
+        const val SENSOR_TYPE_EDA = 65554
+        const val TAG = "HeartRateRepository"
+    }
+
     private var sensorManager: SensorManager? = null
     private var heartRateSensor: Sensor? = null
-    private var heartRateListener: SensorEventListener? = null
+    private var edaSensor: Sensor? = null
+    private var sensorListener: SensorEventListener? = null
 
-    private val _collectedData = mutableListOf<Float>()
-    val collectedData: List<Float> get() = _collectedData
+    private val _collectedHeartRates = mutableListOf<Float>()
+    val collectedHeartRates: List<Float> get() = _collectedHeartRates
+
+    private val _collectedEDA = mutableListOf<Float>()
+    val collectedEDA: List<Float> get() = _collectedEDA
 
     private val _latestHeartRate = MutableStateFlow<Float?>(null)
     val latestHeartRate: StateFlow<Float?> = _latestHeartRate
+
+    private val _latestEDA = MutableStateFlow<Float?>(null)
+    val latestEDA: StateFlow<Float?> = _latestEDA
 
     private var _isCollecting : Boolean = false
 
     fun start() {
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+        edaSensor = sensorManager?.getDefaultSensor(SENSOR_TYPE_EDA)
 
         if (heartRateSensor == null) return
+        if (edaSensor == null) {
+            Log.e(TAG, "eda sensor not found")
+        }
 
-        heartRateListener = object : SensorEventListener {
+        sensorListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
                 event?.let {
-                    if (it.sensor.type == Sensor.TYPE_HEART_RATE) {
-                        val heartRate = it.values[0]
-                        if(_isCollecting)
-                            _collectedData.add(heartRate)
-                        _latestHeartRate.value = heartRate
+                    when (it.sensor.type) {
+                        Sensor.TYPE_HEART_RATE -> {
+                            val heartRate = it.values[0]
+                            if (_isCollecting) _collectedHeartRates.add(heartRate)
+                            _latestHeartRate.value = heartRate
+                        }
+                        65554 -> { // EDA Sensor
+                            val edaValue = it.values[0]
+                            if (_isCollecting) _collectedEDA.add(edaValue)
+                            _latestEDA.value = edaValue
+                        }
                     }
                 }
             }
@@ -44,14 +67,14 @@ class HeartRateRepository(private val context: Context) {
         }
 
         sensorManager?.registerListener(
-            heartRateListener,
+            sensorListener,
             heartRateSensor,
             SensorManager.SENSOR_DELAY_FASTEST
         )
     }
 
     fun stop() {
-        heartRateListener?.let {
+        sensorListener?.let {
             sensorManager?.unregisterListener(it)
         }
     }
@@ -61,12 +84,14 @@ class HeartRateRepository(private val context: Context) {
     }
 
     fun stopCollecting(){
-        _isCollecting = true
+        _isCollecting = false
     }
 
     fun clearData() {
-        _collectedData.clear()
+        _collectedHeartRates.clear()
+        _collectedEDA.clear()
         _latestHeartRate.value = null
+        _latestEDA.value = null
     }
 }
 
