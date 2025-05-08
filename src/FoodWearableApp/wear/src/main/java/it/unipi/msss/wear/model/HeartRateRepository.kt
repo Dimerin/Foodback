@@ -5,9 +5,8 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import kotlinx.coroutines.*
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class HeartRateRepository(private val context: Context) {
 
@@ -15,44 +14,59 @@ class HeartRateRepository(private val context: Context) {
     private var heartRateSensor: Sensor? = null
     private var heartRateListener: SensorEventListener? = null
 
-    suspend fun collectHeartRateData(durationSeconds: Int = 10): Pair<Double, Double>? {
-        return withContext(Dispatchers.IO) {
-            val collectedData = mutableListOf<Float>()
+    private val _collectedData = mutableListOf<Float>()
+    val collectedData: List<Float> get() = _collectedData
 
-            val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            val heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+    private val _latestHeartRate = MutableStateFlow<Float?>(null)
+    val latestHeartRate: StateFlow<Float?> = _latestHeartRate
 
-            if (heartRateSensor == null) return@withContext null
+    private var _isCollecting : Boolean = false
 
-            val listener = object : SensorEventListener {
-                override fun onSensorChanged(event: SensorEvent?) {
-                    event?.let {
-                        if (it.sensor.type == Sensor.TYPE_HEART_RATE) {
-                            collectedData.add(it.values[0])
-                        }
+    fun start() {
+        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        heartRateSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+
+        if (heartRateSensor == null) return
+
+        heartRateListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                event?.let {
+                    if (it.sensor.type == Sensor.TYPE_HEART_RATE) {
+                        val heartRate = it.values[0]
+                        if(_isCollecting)
+                            _collectedData.add(heartRate)
+                        _latestHeartRate.value = heartRate
                     }
                 }
-
-                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
             }
 
-            sensorManager.registerListener(
-                listener,
-                heartRateSensor,
-                SensorManager.SENSOR_DELAY_FASTEST
-            )
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
 
-            delay(durationSeconds * 1000L)
+        sensorManager?.registerListener(
+            heartRateListener,
+            heartRateSensor,
+            SensorManager.SENSOR_DELAY_FASTEST
+        )
+    }
 
-            sensorManager.unregisterListener(listener)
-
-            if (collectedData.isNotEmpty()) {
-                val avg = collectedData.average()
-                val std = sqrt(collectedData.map { (it - avg).pow(2) }.average())
-                Pair(avg, std)
-            } else {
-                null
-            }
+    fun stop() {
+        heartRateListener?.let {
+            sensorManager?.unregisterListener(it)
         }
     }
+
+    fun startCollecting(){
+        _isCollecting = true
+    }
+
+    fun stopCollecting(){
+        _isCollecting = true
+    }
+
+    fun clearData() {
+        _collectedData.clear()
+        _latestHeartRate.value = null
+    }
 }
+
