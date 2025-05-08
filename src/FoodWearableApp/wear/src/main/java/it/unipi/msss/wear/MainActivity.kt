@@ -9,6 +9,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import com.google.android.gms.wearable.Wearable
+import it.unipi.msss.wear.services.SamplingMessageListener
 import it.unipi.msss.wear.ui.HeartRateScreen
 import it.unipi.msss.wear.viewmodel.HeartRateViewModel
 import it.unipi.msss.wear.viewmodel.HeartRateViewModelFactory
@@ -29,9 +31,12 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, "Permesso negato", Toast.LENGTH_SHORT).show()
             }
         }
+    private var samplingMessageListener: SamplingMessageListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        samplingMessageListener = SamplingMessageListener(applicationContext, heartRateViewModel)
+        Wearable.getMessageClient(this).addListener(samplingMessageListener!!)
 
         // Controlla se il permesso è già stato concesso
         when {

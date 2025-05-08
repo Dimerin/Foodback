@@ -1,9 +1,11 @@
 package it.unipi.msss.foodback.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import it.unipi.msss.foodback.services.HeartRateMessageListener
+import it.unipi.msss.foodback.services.Sender
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,6 +25,12 @@ class HeartRatePhoneViewModel(application: Application) : AndroidViewModel(appli
             HeartRateMessageListener.heartRateFlow.collect { (avg, stdev) ->
                 _uiState.value = PhoneHeartRateState(lastAvg = avg, lastStdev = stdev)
             }
+        }
+        try {
+            Sender.sendSamplingMessage(application)
+            Log.d("HeartPhoneViewModel", "Start sampling inviato")
+        } catch (e: Exception) {
+            Log.e("HeartRateViewModel", "Errore durante invio", e)
         }
     }
 }

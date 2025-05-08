@@ -58,19 +58,8 @@ fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
                     text = "Rilevamento in corso...",
                     style = MaterialTheme.typography.body2
                 )
-            } else {
-                Button(onClick = { viewModel.startCollection(context) }) {
-                    Text("Avvia rilevamento")
-                }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = {
-                viewModel.saveData(context = context)
-            }) {
-                Text("Salva dati")
-            }
 
             state.error?.let { errorMsg ->
                 Spacer(modifier = Modifier.height(16.dp))

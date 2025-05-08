@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.google.android.gms.wearable.Wearable
 import it.unipi.msss.wear.model.DataSender
+import it.unipi.msss.wear.services.SamplingMessageListener
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.delay
@@ -33,6 +35,9 @@ class HeartRateViewModel(context : Context) : ViewModel() {
     }
 
     fun startCollection(context: Context) {
+        if (_uiState.value.isCollecting) {
+            return
+        }
         heartRateRepository.startCollecting()
         _uiState.value = _uiState.value.copy(isCollecting = true)
 
