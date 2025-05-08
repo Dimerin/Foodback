@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "it.unipi.msss.foodback"
+    namespace = "it.unipi.msss"
     compileSdk = 35
 
     defaultConfig {

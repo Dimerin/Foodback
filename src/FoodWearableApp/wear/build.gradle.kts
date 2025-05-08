@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "it.unipi.msss.wear"
+    namespace = "it.unipi.msss"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "it.unipi.msss.wear"
+        applicationId = "it.unipi.msss.foodback"
         minSdk = 30
         targetSdk = 35
         versionCode = 1

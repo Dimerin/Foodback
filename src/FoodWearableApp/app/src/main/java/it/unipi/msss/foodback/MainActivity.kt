@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
             HeartRatePhoneScreen()
         }
 
-        // 🔗 Registrazione listener
+        // Registrazione listener
         Wearable.getMessageClient(this).addListener(heartRateMessageListener)
     }
 
@@ -24,4 +24,17 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         Wearable.getMessageClient(this).removeListener(heartRateMessageListener)
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Aggiungi il listener quando l'attività è visibile e in primo piano
+        Wearable.getMessageClient(this).addListener(heartRateMessageListener)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Rimuovi il listener quando l'attività non è visibile
+        Wearable.getMessageClient(this).removeListener(heartRateMessageListener)
+    }
+
 }
