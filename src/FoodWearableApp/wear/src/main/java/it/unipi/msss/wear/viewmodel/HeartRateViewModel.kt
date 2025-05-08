@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 
 data class HeartRateUiState(
     val latestHeartRate: Float? = null,
+    val latestEda: Float? = null,
     val isCollecting: Boolean = false,
     val error: String? = null
 )
@@ -32,6 +33,10 @@ class HeartRateViewModel(context : Context) : ViewModel() {
                 _uiState.value = _uiState.value.copy(latestHeartRate = latestHeartRate)
             }
             .launchIn(viewModelScope)
+        heartRateRepository.latestEDA
+            .onEach { latestEda ->
+                _uiState.value = _uiState.value.copy(latestEda = latestEda)
+            }
     }
 
     fun startCollection(context: Context) {

@@ -5,6 +5,8 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +16,7 @@ class HeartRateRepository(private val context: Context) {
     companion object {
         const val SENSOR_TYPE_EDA = 65554
         const val TAG = "HeartRateRepository"
+        const val SENSOR_THREAD = "Sensor Thread"
     }
 
     private var sensorManager: SensorManager? = null
@@ -47,6 +50,7 @@ class HeartRateRepository(private val context: Context) {
 
         sensorListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
+                Log.d("ThreadTest", "Thread name: ${Thread.currentThread().name}")
                 event?.let {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
@@ -54,7 +58,7 @@ class HeartRateRepository(private val context: Context) {
                             if (_isCollecting) _collectedHeartRates.add(heartRate)
                             _latestHeartRate.value = heartRate
                         }
-                        65554 -> { // EDA Sensor
+                        SENSOR_TYPE_EDA -> { // EDA Sensor
                             val edaValue = it.values[0]
                             if (_isCollecting) _collectedEDA.add(edaValue)
                             _latestEDA.value = edaValue
@@ -66,11 +70,25 @@ class HeartRateRepository(private val context: Context) {
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
 
+        val handlerThread = HandlerThread(SENSOR_THREAD)
+        handlerThread.start()
+        val handler = Handler(handlerThread.looper)
+
         sensorManager?.registerListener(
             sensorListener,
             heartRateSensor,
-            SensorManager.SENSOR_DELAY_FASTEST
+            SensorManager.SENSOR_DELAY_FASTEST,
+            handler
         )
+
+        if (edaSensor != null) {
+            sensorManager?.registerListener(
+                sensorListener,
+                edaSensor,
+                SensorManager.SENSOR_DELAY_FASTEST,
+                handler
+            )
+        }else{Log.e(TAG,"Eda sensor is null")}
     }
 
     fun stop() {

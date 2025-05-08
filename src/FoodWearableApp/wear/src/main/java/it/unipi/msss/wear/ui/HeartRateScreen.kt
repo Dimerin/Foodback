@@ -49,6 +49,19 @@ fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
                 color = Color.Gray
             )
 
+            state.latestEda?.let { eda->
+            Text(
+                text = "${eda.toInt()} EDA",
+                style = MaterialTheme.typography.title3,
+                color = MaterialTheme.colors.primary,
+                textAlign = TextAlign.Center
+            )
+        } ?: Text(
+            text = "Nessun dato EDA",
+            style = MaterialTheme.typography.body1,
+            color = Color.Gray
+        )
+
             Spacer(modifier = Modifier.height(32.dp))
 
             if (state.isCollecting) {
