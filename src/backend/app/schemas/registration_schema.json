@@ -19,15 +19,14 @@
       },
       "gender": {
         "type": "string",
-        "enum": ["male", "female", "other"]
+        "enum": ["Male", "Female"]
       },
       "email": {
         "type": "string",
         "format": "email"
       },
       "password": {
-        "type": "string",
-        "minLength": 6
+        "type": "string"
       }
     },
     "required": ["name", "surname", "dateOfBirth", "gender", "email", "password"],

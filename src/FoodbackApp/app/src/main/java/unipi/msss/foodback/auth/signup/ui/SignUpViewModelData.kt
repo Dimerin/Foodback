@@ -1,5 +1,6 @@
 package unipi.msss.foodback.auth.signup.ui
 
+import android.content.Context
 import unipi.msss.foodback.commons.ViewEvent
 import unipi.msss.foodback.commons.ViewState
 import java.util.Date
@@ -44,7 +45,10 @@ sealed class SignUpEvent : ViewEvent {
     data class ConfirmPasswordChanged(val confirmPassword: String) : SignUpEvent()
     data object TogglePasswordVisibility : SignUpEvent()
     data object ToggleConfirmPasswordVisibility : SignUpEvent()
-    object SignUpClicked : SignUpEvent()
+    data class SignUpClicked(
+        val context: Context,
+        val successIconResId: Int
+    ) : SignUpEvent()
 }
 
 sealed class SignUpNavigationEvents {

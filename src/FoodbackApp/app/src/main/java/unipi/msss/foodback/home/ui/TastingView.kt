@@ -11,10 +11,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
@@ -30,23 +33,26 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import unipi.msss.foodback.R
 import unipi.msss.foodback.commons.ViewEvent
+import unipi.msss.foodback.ui.theme.FoodbackPreview
+import unipi.msss.foodback.ui.theme.FoodbackTheme
 
 
 @Composable
 fun TastingView(
     viewModel: TastingViewModel = hiltViewModel(),
     onFinished: () -> Unit = {},
+    onLoggedOut: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-
-
 
     TastingScreen(state = state, onEvent = { viewModel.onEvent(it) })
 
     ViewEvent(viewModel.eventsFlow) { event ->
         when (event) {
             is TastingNavigationEvents.Finished -> onFinished()
+            is TastingNavigationEvents.Error -> Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+            
             is TastingNavigationEvents.ShareCsvFile -> {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/csv"
@@ -55,7 +61,11 @@ fun TastingView(
                 }
                 context.startActivity(shareIntent)
             }
-            is TastingNavigationEvents.Error -> Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+
+            is TastingNavigationEvents.LoggedOut -> {
+                onLoggedOut()
+                Toast.makeText(context, "Logged out", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }
@@ -63,21 +73,28 @@ fun TastingView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TastingScreen(
-    state: TastingState,
-    onEvent: (TastingEvent) -> Unit,
+    state: TastingState = TastingState(),
+    onEvent: (TastingEvent) -> Unit = {},
 ) {
 
     val textColor = MaterialTheme.colorScheme.primary
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tasting Protocol") }
+                title = { Text("Tasting Protocol") },
+                actions = {
+                    IconButton(onClick = { onEvent.invoke(TastingEvent.ShowLogoutDialog) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ExitToApp,
+                            contentDescription = "Logout",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             )
-        },
-
-
+        }
     ) { padding ->
-        
 
         Column(
             modifier = Modifier
@@ -85,9 +102,7 @@ fun TastingScreen(
                 .padding(padding)
                 .padding(24.dp),
             verticalArrangement = Arrangement.Top,
-
             horizontalAlignment = Alignment.CenterHorizontally
-
         ) {
             LottieAnimation(
                 modifier = Modifier
@@ -108,21 +123,22 @@ fun TastingScreen(
             )
 
             Spacer(Modifier.height(16.dp))
-
+            
             OutlinedTextField(
                 value = state.subject,
                 onValueChange = { onEvent(TastingEvent.SubjectChanged(it)) },
-                label = { Text("Subject (e.g. NicolaSecco)") },
+                label = { Text("Subject (e.g. SteveRogers)") },
                 singleLine = true,
-                enabled =  !state.protocolRunning,
+                enabled = !state.protocolRunning,
                 modifier = Modifier.fillMaxWidth()
             )
+
 
             Spacer(Modifier.height(16.dp))
 
             Button(
                 onClick = { onEvent(TastingEvent.StartProtocol) },
-                enabled =  state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning,
+                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Start Protocol")
@@ -299,7 +315,34 @@ fun TastingScreen(
                 }
             }
         }
+    
+    // Show logout confirmation dialog
+    if (state.showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { onEvent(TastingEvent.DismissLogoutDialog) },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to log out?") },
+            confirmButton = {
+                TextButton(onClick = { onEvent(TastingEvent.ConfirmLogout) }) {
+                    Text("Yes", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onEvent(TastingEvent.DismissLogoutDialog) }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.secondary)
+                }
+            },
+        )
     }
 }
 
 
+@Composable
+@FoodbackPreview
+private fun TastingPreview() {
+    FoodbackTheme  {
+        Surface {
+            TastingScreen()
+        }
+    }
+}

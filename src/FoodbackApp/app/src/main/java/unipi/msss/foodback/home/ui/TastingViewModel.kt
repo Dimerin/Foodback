@@ -25,29 +25,28 @@ import kotlinx.coroutines.withTimeoutOrNull
 import mylibrary.mindrove.SensorData
 import mylibrary.mindrove.ServerManager
 import unipi.msss.foodback.R
+import unipi.msss.foodback.commons.EventStateViewModel
+import unipi.msss.foodback.commons.ViewModelEvents
+import unipi.msss.foodback.home.data.TastingUseCase
 import java.io.File
 import javax.inject.Inject
 
-sealed class TastingNavigationEvents {
-    data object Finished : TastingNavigationEvents()
-    data class ShareCsvFile(val uri: Uri) : TastingNavigationEvents()
-    data class Error(val message: String) : TastingNavigationEvents()
-}
-
 @HiltViewModel
 class TastingViewModel @Inject constructor(
+    private val tastingUseCase: TastingUseCase,
+    viewModelEvents: ViewModelEvents<TastingNavigationEvents>,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     @ApplicationContext private val context: Context
-) : ViewModel() {
+) : EventStateViewModel<TastingState, TastingEvent>(),
+    ViewModelEvents<TastingNavigationEvents> by viewModelEvents {
 
-    private val _state = MutableStateFlow(TastingState())
-    val state: StateFlow<TastingState> = _state.asStateFlow()
+    override val _state: MutableStateFlow<TastingState> = MutableStateFlow(TastingState())
+
     private var healthCheckJob: Job? = null
+
     private val _eventsFlow = MutableSharedFlow<TastingNavigationEvents>(replay = 1)
-    val eventsFlow: SharedFlow<TastingNavigationEvents> = _eventsFlow
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
-
 
     private var serverManager: ServerManager? = null
 
@@ -107,7 +106,7 @@ class TastingViewModel @Inject constructor(
         private const val TIME_TO_TASTE = 10_000L // ms
     }
 
-    fun onEvent(event: TastingEvent) {
+    override fun onEvent(event: TastingEvent) {
         when (event) {
             is TastingEvent.SubjectChanged -> {
                 _state.value = _state.value.copy(subject = event.value)
@@ -144,6 +143,19 @@ class TastingViewModel @Inject constructor(
             is TastingEvent.ShareCsv -> {
                 shareCsvFile(context)
             }
+
+            is TastingEvent.ShowLogoutDialog -> {
+                _state.value = _state.value.copy(showLogoutDialog = true)
+            }
+
+            is TastingEvent.DismissLogoutDialog -> {
+                _state.value = _state.value.copy(showLogoutDialog = false)
+            }
+
+            is TastingEvent.ConfirmLogout -> {
+                performLogout()
+            }
+
         }
     }
 
@@ -152,17 +164,10 @@ class TastingViewModel @Inject constructor(
             if (_state.value.stage == TastingStage.Recording) {
                 buffer += sensorData
                 _state.value = _state.value.copy(sensorData = buffer.toList())
-
-                // Debugging sensor data
-               /* println("Received SensorData: packet=${sensorData.numberOfMeasurement}, " +
-                        "ch1=${sensorData.channel1}, ch2=${sensorData.channel2}, " +
-                        "ch3=${sensorData.channel3}, ch4=${sensorData.channel4}, " +
-                        "ch5=${sensorData.channel5}, ch6=${sensorData.channel6}")*/
-            } 
+            }
         }
         serverManager?.start()
     }
-
 
     private fun runProtocol() {
         job = viewModelScope.launch(ioDispatcher) {
@@ -304,10 +309,17 @@ class TastingViewModel @Inject constructor(
                 (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
     }
 
+    private fun performLogout() = viewModelScope.launch {
+        tastingUseCase.logout()
+        updateState(_state.value.copy(showLogoutDialog = false))
+        sendEvent(TastingNavigationEvents.LoggedOut)
+    }
+
     override fun onCleared() {
         super.onCleared()
         serverManager?.stop()
         job?.cancel()
         healthCheckJob?.cancel()
     }
+
 }

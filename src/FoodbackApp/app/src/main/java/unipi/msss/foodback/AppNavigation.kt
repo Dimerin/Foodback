@@ -22,8 +22,8 @@ sealed class NavDestinations(val route: String) {
 fun AppNavigator(navController: NavHostController, authState: AuthState) {
     val startDestination = when (authState) {
         AuthState.Authenticated -> NavDestinations.Home.route
-        // else -> NavDestinations.Login.route
-        else -> NavDestinations.DataCollection.route
+        AuthState.AdminAuthenticated -> NavDestinations.DataCollection.route
+        else -> NavDestinations.Login.route
     }
 
     NavHost(navController = navController, startDestination = startDestination) {
@@ -31,6 +31,11 @@ fun AppNavigator(navController: NavHostController, authState: AuthState) {
             LoginView(
                 onLoginSuccess = {
                     navController.navigate(NavDestinations.Home.route) {
+                        popUpTo(NavDestinations.Login.route) { inclusive = true }
+                    }
+                },
+                onLoginAdminSuccess = {
+                    navController.navigate(NavDestinations.DataCollection.route) {
                         popUpTo(NavDestinations.Login.route) { inclusive = true }
                     }
                 },
@@ -46,7 +51,7 @@ fun AppNavigator(navController: NavHostController, authState: AuthState) {
                     navController.navigate(NavDestinations.Login.route) {
                         popUpTo(0) // Clear everything from the back stack
                     }
-                },
+                }
             )
         }
 
@@ -64,9 +69,12 @@ fun AppNavigator(navController: NavHostController, authState: AuthState) {
         }
 
         composable(NavDestinations.DataCollection.route) {
-            val viewModel: TastingViewModel = hiltViewModel()
             TastingView(
-
+                onLoggedOut = {
+                    navController.navigate(NavDestinations.Login.route) {
+                        popUpTo(0) // Clear everything from the back stack
+                    }
+                }
             )
         }
     }

@@ -1,6 +1,6 @@
 [versions]
 # Android and Kotlin Versions
-agp = "8.9.0"
+agp = "8.9.2"
 kotlin = "2.1.10"
 kotlinJvm = "2.0.21"
 kotlinSerialization = "2.1.10"

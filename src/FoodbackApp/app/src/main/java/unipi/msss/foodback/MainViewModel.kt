@@ -9,6 +9,7 @@ import unipi.msss.foodback.data.network.NetworkResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import unipi.msss.foodback.auth.login.ui.LoginNavigationEvents
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,9 +25,16 @@ class MainViewModel @Inject constructor(
     }
 
     private fun checkUserSession() = viewModelScope.launch {
-        when (getUserUseCase()) {
+        val getUserResult = getUserUseCase()
+        when (getUserResult) {
             is NetworkResult.Success<LoginResponse> -> {
-                _authState.value = AuthState.Authenticated
+                if (getUserResult.data.userType == "admin") {
+                    println("Logged User is an Admin")
+                    _authState.value = AuthState.AdminAuthenticated
+                }
+                else {
+                    _authState.value = AuthState.Authenticated
+                }
             }
 
             else -> {
@@ -39,5 +47,6 @@ class MainViewModel @Inject constructor(
 sealed class AuthState {
     object Loading : AuthState()
     object Authenticated : AuthState()
+    object AdminAuthenticated : AuthState()
     object Unauthenticated : AuthState()
 }

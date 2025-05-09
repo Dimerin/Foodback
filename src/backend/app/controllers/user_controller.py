@@ -3,7 +3,6 @@ from services import UserService
 from jsonschema import validate, ValidationError
 from logger import log
 import json
-from exceptions import UserAlreadyExistsError
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
 
 
@@ -18,12 +17,6 @@ class UserController:
             '/users/<int:user_id>', 
             view_func=self.get_user, 
             methods=['GET']
-            )
-        
-        self.bp.add_url_rule(
-            '/users/signup', 
-            view_func=self.register_user, 
-            methods=['POST']
             )
         self.bp.add_url_rule(
             '/users', 
@@ -88,50 +81,4 @@ class UserController:
             jsonify({"error": "User not found"}), 404
         )
 
-    def register_user(self):
-        log.info("API: User Registration")
-        
-        data = request.get_json()
-        if not data:
-            return make_response(jsonify({"error": "No input data provided"}), 400)
-        
-        schema_path = 'schemas/registration_schema.json'
-        with open(schema_path, 'r') as schema_file:
-            schema = json.load(schema_file)
-        try:
-            validate(instance=data, schema=schema)
-        except ValidationError as e:    
-            return make_response(jsonify({"error": e.message}), 400)
-        
-        
-        name = data.get('name')
-        surname = data.get('surname')
-        dateOfBirth = data.get('dateOfBirth')  # ISO 8601 string (e.g. "1990-01-01")
-        email = data.get('email')
-        password = data.get('password')
-        gender = data.get('gender')
-        
-        try:
-            user = self.user_service.create_user(
-                name, surname, dateOfBirth, gender, email, password
-            )
-            return make_response(
-                jsonify({
-                    "id": user.id,
-                    "name": user.name,
-                    "surname": user.surname,
-                    "user_type": user.user_type,
-                    "dateOfBirth": user.dateOfBirth.isoformat(),
-                    "email": user.email
-                }), 201
-            )
-        except UserAlreadyExistsError as e:
-            log.error(f"User already exists: {e}")
-            return make_response(
-                jsonify({"error": "Registration failed"}), 409
-            )
-        except Exception as e:
-            log.error(f"Error creating user: {e}")
-            return make_response(
-                jsonify({"error": "User registration failed"}), 500
-            )
+    

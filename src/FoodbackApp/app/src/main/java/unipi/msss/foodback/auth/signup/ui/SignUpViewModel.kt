@@ -1,5 +1,7 @@
 package unipi.msss.foodback.auth.signup.ui
 
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import unipi.msss.foodback.auth.signup.data.SignupResponse
@@ -67,8 +69,8 @@ class SignUpViewModel @Inject constructor(
                     updateState(_state.value.copy(dateOfBirthError = "Date of Birth cannot be empty"))
                     return
                 }
-                if (_state.value.password.length < 6) {
-                    updateState(_state.value.copy(passwordError = "Password must be at least 6 characters"))
+                if (_state.value.password.isEmpty()) {
+                    updateState(_state.value.copy(passwordError = "Password cannot be empty"))
                     return
                 }
                 if (_state.value.password != _state.value.confirmPassword) {
@@ -76,13 +78,12 @@ class SignUpViewModel @Inject constructor(
                     return
                 }
 
-
-                signup()
+                signup(event.context, event.successIconResId)
             }
         }
     }
 
-    private fun signup() = viewModelScope.launch {
+    private fun signup(context: Context, successIconResId: Int) = viewModelScope.launch {
         updateState(_state.value.copy(isLoading = true))
 
         val signupObject = SignUpDTO(
@@ -101,6 +102,12 @@ class SignUpViewModel @Inject constructor(
             is NetworkResult.Success<SignupResponse> -> {
                 sendEvent(SignUpNavigationEvents.SignedUp)
                 // Toast with success message
+                // TODO: Try to add success icon (successIconResId) inside the toast
+                Toast.makeText(
+                    context,
+                    "Account successfully created",
+                    Toast.LENGTH_LONG
+                ).show()
             }
 
             is NetworkResult.Error.ClientError -> {
