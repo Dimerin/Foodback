@@ -17,6 +17,8 @@ data class TastingState(
     val stage: TastingStage = TastingStage.Idle,
     val sensorData: List<SensorData> = emptyList(),
     val rating: String = "",
+    val isDeviceConnected: Boolean = false,
+    val showLogoutDialog: Boolean = false,
 
 ) {
     val protocolRunning: Boolean
@@ -29,8 +31,12 @@ data class TastingState(
             TastingStage.Finished -> "Tasting done"
             TastingStage.AskingRating -> "Please rate the experience from 1 to 5"
             TastingStage.Done -> "Session complete"
-            TastingStage.Idle -> ""
+            TastingStage.Idle -> "Welcome to the tasting session! Read the instructions and press start to begin"
         }
+
+    val isIdle: Boolean
+        get() = stage == TastingStage.Idle
+
     val isBringingToMouth: Boolean
         get() = stage == TastingStage.BringingToMouth
 

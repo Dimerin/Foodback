@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import mylibrary.mindrove.SensorData
 import mylibrary.mindrove.ServerManager
 import unipi.msss.foodback.R
@@ -40,7 +42,7 @@ class TastingViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(TastingState())
     val state: StateFlow<TastingState> = _state.asStateFlow()
-
+    private var healthCheckJob: Job? = null
     private val _eventsFlow = MutableSharedFlow<TastingNavigationEvents>(replay = 1)
     val eventsFlow: SharedFlow<TastingNavigationEvents> = _eventsFlow
     private val buffer = mutableListOf<SensorData>()
@@ -49,9 +51,59 @@ class TastingViewModel @Inject constructor(
 
     private var serverManager: ServerManager? = null
 
+    init {
+        startHealthCheck()
+    }
+    private fun startHealthCheck() {
+        healthCheckJob?.cancel()
+        healthCheckJob = viewModelScope.launch(ioDispatcher) {
+            while (true) {
+                delay(2000L)
+
+                // Only check when not actively recording
+                if (_state.value.stage != TastingStage.Recording) {
+                    val isDeviceTransmitting = tryConnectToDevice()
+                    _state.value = _state.value.copy(isDeviceConnected = isDeviceTransmitting)
+                }
+            }
+        }
+    }
+
+    private suspend fun tryConnectToDevice(): Boolean = withTimeoutOrNull(1500L) {
+        return@withTimeoutOrNull suspendCancellableCoroutine { cont ->
+            var isDataReceived = false
+            val tempManager = ServerManager { _ ->
+                isDataReceived = true
+                cont.resume(true) { _, _, _ -> } // Resume coroutine once data is received
+            }
+
+            try {
+                tempManager.start()
+
+                // Fallback: if no data comes within the timeout, return false
+                viewModelScope.launch {
+                    delay(1400L) // Short delay to allow data to arrive
+                    if (!isDataReceived && cont.isActive) {
+                        cont.resume(false) { _, _, _ -> }
+                    }
+                }
+
+                // Stop the temp manager once coroutine completes
+                cont.invokeOnCancellation {
+                    tempManager.stop()
+                }
+
+            } catch (e: Exception) {
+                tempManager.stop()
+                if (cont.isActive) cont.resume(false) { _, _, _ -> }
+            }
+        }
+    } ?: false // If timeout occurs
+
+
 
     companion object {
-        private const val TIME_TO_BRING = 5_000L // ms
+        private const val TIME_TO_GET_READY = 5_000L // ms
         private const val TIME_TO_TASTE = 10_000L // ms
     }
 
@@ -64,14 +116,13 @@ class TastingViewModel @Inject constructor(
             }
 
             is TastingEvent.StartProtocol -> {
-                if (!isNetworkAvailable(context)) {
+                if (!isNetworkAvailable(context) || !state.value.isDeviceConnected) {
                     viewModelScope.launch {
-                        _eventsFlow.emit(TastingNavigationEvents.Error("Network permissions are required to start the protocol."))
+                        _eventsFlow.emit(TastingNavigationEvents.Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
                     }
                     return
                 }
                 buffer.clear()
-                _state.value = _state.value.copy(rating = "") // Reset the rating
                 startSession()
                 runProtocol()
             }
@@ -121,7 +172,7 @@ class TastingViewModel @Inject constructor(
                 setOnCompletionListener { release() }
                 start()
             }
-            delay(TIME_TO_BRING)
+            delay(TIME_TO_GET_READY)
 
             // Second beep
             _state.value = _state.value.copy(stage = TastingStage.Recording)
@@ -249,14 +300,14 @@ class TastingViewModel @Inject constructor(
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
-        return capabilities != null &&
-                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
+        return (capabilities != null) &&
+                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
     }
 
     override fun onCleared() {
         super.onCleared()
         serverManager?.stop()
         job?.cancel()
+        healthCheckJob?.cancel()
     }
 }

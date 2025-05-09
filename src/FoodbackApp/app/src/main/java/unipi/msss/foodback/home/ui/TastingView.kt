@@ -1,6 +1,5 @@
 package unipi.msss.foodback.home.ui
 
-
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
@@ -8,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
@@ -72,9 +73,11 @@ fun TastingScreen(
             TopAppBar(
                 title = { Text("Tasting Protocol") }
             )
-        }
-    ) { padding ->
+        },
 
+
+    ) { padding ->
+        
 
         Column(
             modifier = Modifier
@@ -82,7 +85,9 @@ fun TastingScreen(
                 .padding(padding)
                 .padding(24.dp),
             verticalArrangement = Arrangement.Top,
+
             horizontalAlignment = Alignment.CenterHorizontally
+
         ) {
             LottieAnimation(
                 modifier = Modifier
@@ -152,7 +157,7 @@ fun TastingScreen(
                                 .clickable(
                                     indication = null, // Disable ripple effect
                                     interactionSource = remember { MutableInteractionSource() } // Prevent interaction tracking
-                                ) { 
+                                ) {
                                     selectedRating = i
                                     onEvent(TastingEvent.RatingChanged(i.toString()))
                                 }
@@ -256,23 +261,41 @@ fun TastingScreen(
             }
 
             Spacer(Modifier.weight(1f))
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
+          if (state.isFinished || state.isIdle ) {
+              Text(
+                  text = if (state.isDeviceConnected) "Mindrove Connected" else "Mindrove Disconnected",
+                  fontSize = 18.sp,
+                  modifier = Modifier.fillMaxWidth(),
+                  textAlign = TextAlign.Center,
+                  color = if (state.isDeviceConnected) Color.Green else Color.Red
+              )
+              Spacer(Modifier.height(24.dp))
+          }
+          Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = { onEvent(TastingEvent.DeleteCsv) },
+                Text(
+                    text = "eeg_tasting_data.csv",
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f)
+                )
 
-
-                ) {
-                    Text("Delete CSV File")
+                IconButton(onClick = { onEvent(TastingEvent.DeleteCsv) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Delete CSV File",
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
                 }
 
-                Button(
-                    onClick = { onEvent(TastingEvent.ShareCsv) },
-
-                ) {
-                    Text("Share CSV File")
+                IconButton(onClick = { onEvent(TastingEvent.ShareCsv) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = "Share CSV File",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
