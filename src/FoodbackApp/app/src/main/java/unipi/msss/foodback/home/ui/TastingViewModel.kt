@@ -4,8 +4,10 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,7 +16,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import mylibrary.mindrove.SensorData
@@ -23,11 +24,13 @@ import unipi.msss.foodback.R
 import unipi.msss.foodback.commons.EventStateViewModel
 import unipi.msss.foodback.commons.ViewModelEvents
 import unipi.msss.foodback.home.data.TastingUseCase
+import unipi.msss.foodback.home.ui.TastingNavigationEvents.*
 import unipi.msss.foodback.services.HeartRateMessageListener
 import unipi.msss.foodback.services.Sender
+import unipi.msss.foodback.services.WearableData
 import java.io.File
+import java.io.IOException
 import javax.inject.Inject
-import kotlin.math.sqrt
 
 @HiltViewModel
 class TastingViewModel @Inject constructor(
@@ -41,15 +44,16 @@ class TastingViewModel @Inject constructor(
     override val _state: MutableStateFlow<TastingState> = MutableStateFlow(TastingState())
 
     private var healthCheckJob: Job? = null
-
+    private val heartRateMessageListener = HeartRateMessageListener()
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
-
     private var serverManager: ServerManager? = null
 
     init {
         startHealthCheck()
+        Wearable.getMessageClient(context).addListener(heartRateMessageListener) //FIXME
     }
+
     private fun startHealthCheck() {
         healthCheckJob?.cancel()
         healthCheckJob = viewModelScope.launch(ioDispatcher) {
@@ -65,12 +69,12 @@ class TastingViewModel @Inject constructor(
         }
     }
 
-    private suspend fun tryConnectToDevice(): Boolean = withTimeoutOrNull(1500L) {
+    private suspend fun tryConnectToDevice(): Boolean = withTimeoutOrNull(1500L) { //FIXME
         return@withTimeoutOrNull suspendCancellableCoroutine { cont ->
             var isDataReceived = false
             val tempManager = ServerManager { _ ->
                 isDataReceived = true
-                cont.resume(true) { _, _, _ -> } // Resume coroutine once data is received
+                cont.resume(true) { _, _, _ -> }
             }
 
             try {
@@ -89,13 +93,12 @@ class TastingViewModel @Inject constructor(
                     tempManager.stop()
                 }
 
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 tempManager.stop()
                 if (cont.isActive) cont.resume(false) { _, _, _ -> }
             }
         }
-    } ?: false // If timeout occurs
-
+    } == true
 
 
     companion object {
@@ -114,7 +117,7 @@ class TastingViewModel @Inject constructor(
             is TastingEvent.StartProtocol -> {
                 if (!isNetworkAvailable(context) || !state.value.isDeviceConnected) {
                     viewModelScope.launch {
-                        sendEvent(TastingNavigationEvents.Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
+                        sendEvent(Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
                     }
                     return
                 }
@@ -133,12 +136,25 @@ class TastingViewModel @Inject constructor(
                 submitRating(rating, subject)
             }
 
-            is TastingEvent.DeleteCsv -> {
-                deleteCsvFile()
+            is TastingEvent.DeleteEEGCsv -> {
+                deleteCsvFile(context,"eeg_tasting_data.csv")
             }
 
-            is TastingEvent.ShareCsv -> {
-                shareCsvFile(context)
+            is TastingEvent.ShareEEGCsv -> {
+                shareCsvFile(context,"eeg_tasting_data.csv")
+            }
+
+            is TastingEvent.DeleteEDACsv -> {
+                shareCsvFile(context,"eda_data.csv")
+            }
+            is TastingEvent.DeleteHRCsv -> {
+                deleteCsvFile(context,"heart_rate_data.csv")
+            }
+            is TastingEvent.ShareEDACsv -> {
+                shareCsvFile(context,"eda_data.csv")
+            }
+            is TastingEvent.ShareHRCsv -> {
+                shareCsvFile(context,"heart_rate_data.csv")
             }
 
             is TastingEvent.ShowLogoutDialog -> {
@@ -152,7 +168,6 @@ class TastingViewModel @Inject constructor(
             is TastingEvent.ConfirmLogout -> {
                 performLogout()
             }
-
         }
     }
 
@@ -178,6 +193,7 @@ class TastingViewModel @Inject constructor(
 
             // Second beep
             _state.value = _state.value.copy(stage = TastingStage.Recording)
+            startWearableSampling()
             MediaPlayer.create(context, R.raw.beep).apply {
                 setOnCompletionListener { release() }
                 start()
@@ -197,23 +213,17 @@ class TastingViewModel @Inject constructor(
     }
 
     private fun submitRating(rating: Int, subject: String) {
+
         viewModelScope.launch(ioDispatcher) {
             try {
                 if (buffer.isEmpty()) {
-                    sendEvent(TastingNavigationEvents.Error("No sensor data to save. Check the Mindrove connection."))
+                    sendEvent(Error("No sensor data to save. Check the Mindrove connection."))
                     _state.value = _state.value.copy(stage = TastingStage.Idle)
                     _state.value = _state.value.copy(rating = "")
                     return@launch
                 }
 
-                val folder = File(context.getExternalFilesDir(null), "Foodback")
-                if (!folder.exists()) {
-                    folder.mkdirs()
-                }
-
-                val file = File(folder, "eeg_tasting_data.csv")
-
-
+                val file = File(context.getExternalFilesDir(null),"eeg_tasting_data.csv")
                 val experimentNumber = getExperimentNumber(file)
 
                 val rows = buffer.map { sd ->
@@ -236,14 +246,16 @@ class TastingViewModel @Inject constructor(
                 }
                 file.appendText(rows.joinToString("\n", "\n"))
 
+                collectWearableData(experimentNumber)
+
                 _state.value = _state.value.copy(stage = TastingStage.Done)
                 _state.value = _state.value.copy(sensorData = emptyList())
                 _state.value = _state.value.copy(rating = "")
                 _state.value = _state.value.copy(subject = "")
                 buffer.clear()
-                sendEvent(TastingNavigationEvents.Finished)
+                sendEvent(Finished)
             } catch (e: Exception) {
-                sendEvent(TastingNavigationEvents.Error("Failed to save data: ${e.message}"))
+                sendEvent(Error("Failed to save data: ${e.message}"))
             }
         }
     }
@@ -257,31 +269,34 @@ class TastingViewModel @Inject constructor(
         return lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
     }
 
-    private fun deleteCsvFile() {
+    private fun deleteCsvFile(context: Context, fileName: String) {
         viewModelScope.launch(ioDispatcher) {
             try {
-                val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
+                val file = File(context.getExternalFilesDir(null), fileName)
 
                 if (file.exists()) {
                     if (file.delete()) {
-                        sendEvent(TastingNavigationEvents.Error("CSV file deleted successfully."))
+                        sendEvent(Error("$fileName deleted successfully."))
                     } else {
-                        sendEvent(TastingNavigationEvents.Error("Failed to delete CSV file."))
+                        sendEvent(Error("Failed to delete $fileName."))
                     }
                 } else {
-                    sendEvent(TastingNavigationEvents.Error("CSV file does not exist."))
+                    sendEvent(Error("$fileName does not exist."))
                 }
             } catch (e: Exception) {
-                sendEvent(TastingNavigationEvents.Error("Failed to delete CSV file: ${e.message}"))
+                sendEvent(Error("Failed to delete $fileName: ${e.message}"))
             }
         }
     }
 
-    private fun shareCsvFile(context: Context) {
-        val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
+
+    private fun shareCsvFile(context: Context, fileName: String) {
+        val file = File(context.getExternalFilesDir(null), fileName)
+
+        // Check if the file exists
         if (!file.exists()) {
             viewModelScope.launch {
-                sendEvent(TastingNavigationEvents.Error("CSV file does not exist."))
+                sendEvent(Error("CSV file $fileName does not exist."))
             }
             return
         }
@@ -293,7 +308,7 @@ class TastingViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            sendEvent(TastingNavigationEvents.ShareCsvFile(uri))
+            sendEvent(ShareCsvFile(uri))
         }
     }
 
@@ -309,42 +324,70 @@ class TastingViewModel @Inject constructor(
     private fun performLogout() = viewModelScope.launch {
         tastingUseCase.logout()
         updateState(_state.value.copy(showLogoutDialog = false))
-        sendEvent(TastingNavigationEvents.LoggedOut)
+        sendEvent(LoggedOut)
     }
 
     private fun startWearableSampling() {
         try {
             Sender.sendSamplingMessage(context)
-            //Log.d("HeartPhoneViewModel", "Start sampling inviato")
+
         } catch (e: Exception) {
-            //Log.e("HeartRateViewModel", "Errore durante invio", e)
+            viewModelScope.launch {
+                sendEvent(Error("Error starting wearable sampling: ${e.message}"))
+                _state.value.copy(stage = TastingStage.Idle)
+                return@launch
+            }
         }
     }
 
-    private fun collectWearableData(){
-
+    private fun collectWearableData(
+        experimentNumber: Int
+    ) {
         viewModelScope.launch {
+            // Collect heart rate data
             HeartRateMessageListener.heartRateFlow.collect { heartRates ->
                 if (heartRates.isNotEmpty()) {
-                    /*
-                    val avg = heartRates.average()
-                    val stdev = sqrt(heartRates.map { (it - avg).pow(2) }.average())
-                    _uiState.value = _uiState.value.copy(lastAvg = avg, lastStdev = stdev)
-                    */
+                    Log.d("HeartRateViewModel", "Received heart rate data: $heartRates")
+                    writeWearableDataToCsv(context, "heart_rate_data.csv", experimentNumber,heartRates)
+                }
+                else{
+                    Log.d("HeartRateViewModel", "No heart rate data received")
                 }
             }
         }
 
         viewModelScope.launch {
+            // Collect EDA data
             HeartRateMessageListener.edaFlow.collect { edaValues ->
                 if (edaValues.isNotEmpty()) {
-                    /*
-                    val avg = edaValues.average()
-                    val stdev = sqrt(edaValues.map { (it - avg).pow(2) }.average())
-                    _uiState.value = _uiState.value.copy(edaAvg = avg, edaStdev = stdev)
-                    */
+                    Log.d("HeartRateViewModel", "Received EDA data: $edaValues")
+                    writeWearableDataToCsv(context, "eda_data.csv", experimentNumber,edaValues)
+                }
+                else{
+                    Log.d("HeartRateViewModel", "No EDA data received")
                 }
             }
+        }
+    }
+
+    fun writeWearableDataToCsv(
+        context: Context,
+        fileName: String,
+        experimentNumber: Int,
+        data: List<WearableData>
+    ) {
+        try {
+            val file = File(context.getExternalFilesDir(null), fileName)
+            if (!file.exists()) {
+                file.appendText("experiment,timestamp,value\n")
+            }
+            val rows = data.joinToString("\n") { entry ->
+                "${experimentNumber},${entry.timestamp},${entry.value}"
+            }
+            file.appendText("$rows\n")
+            Log.d("CSVWriter", "Successfully wrote to ${file.absolutePath}")
+        } catch (e: IOException) {
+            Log.e("CSVWriter", "Error writing CSV: ${e.message}", e)
         }
     }
 

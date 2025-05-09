@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.android)
 }
 
@@ -32,6 +33,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -47,8 +52,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose.jvmstubs)
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation(libs.kotlinx.coroutines.core.v190)
+    implementation(libs.kotlinx.coroutines.android)
 
     // Material Design Dependencies
     implementation(libs.androidx.compose.material)

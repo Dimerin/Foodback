@@ -1,4 +1,4 @@
-package it.unipi.msss.wear.viewmodel
+package unipi.msss.foodback.viewmodel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

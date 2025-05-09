@@ -1,4 +1,4 @@
-package it.unipi.msss.wear
+package unipi.msss.foodback
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -10,11 +10,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.Wearable
-import it.unipi.msss.wear.services.SamplingMessageListener
-import it.unipi.msss.wear.ui.HeartRateScreen
-import it.unipi.msss.wear.viewmodel.HeartRateViewModel
-import it.unipi.msss.wear.viewmodel.HeartRateViewModelFactory
+import unipi.msss.foodback.services.SamplingMessageListener
+import unipi.msss.foodback.ui.HeartRateScreen
 import unipi.msss.foodback.ui.theme.FoodbackTheme
+import unipi.msss.foodback.viewmodel.HeartRateViewModel
+import unipi.msss.foodback.viewmodel.HeartRateViewModelFactory
 
 class MainActivity : ComponentActivity() {
     private val heartRateViewModel : HeartRateViewModel by viewModels {

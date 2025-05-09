@@ -1,4 +1,4 @@
-package it.unipi.msss.wear.model
+package unipi.msss.foodback.model
 
 import android.content.Context
 import android.hardware.Sensor

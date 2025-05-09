@@ -1,18 +1,16 @@
-package it.unipi.msss.wear.viewmodel
+package unipi.msss.foodback.viewmodel
 import android.content.Context
 import androidx.lifecycle.viewModelScope
-import it.unipi.msss.wear.model.HeartRateRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.google.android.gms.wearable.Wearable
-import it.unipi.msss.wear.model.DataSender
-import it.unipi.msss.wear.services.SamplingMessageListener
+import unipi.msss.foodback.model.DataSender
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import unipi.msss.foodback.model.HeartRateRepository
 
 data class HeartRateUiState(
     val latestHeartRate: Float? = null,
@@ -21,7 +19,8 @@ data class HeartRateUiState(
     val error: String? = null
 )
 class HeartRateViewModel(context : Context) : ViewModel() {
-    private val heartRateRepository = HeartRateRepository(context.applicationContext)
+    private val heartRateRepository =
+        HeartRateRepository(context.applicationContext)
     private val _uiState = MutableStateFlow(HeartRateUiState())
     val uiState: StateFlow<HeartRateUiState> = _uiState
 

@@ -1,10 +1,10 @@
-package it.unipi.msss.wear.services
+package unipi.msss.foodback.services
 
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
-import it.unipi.msss.wear.viewmodel.HeartRateViewModel
+import unipi.msss.foodback.viewmodel.HeartRateViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

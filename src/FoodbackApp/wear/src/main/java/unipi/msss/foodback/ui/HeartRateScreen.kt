@@ -1,4 +1,4 @@
-package unipi.msss.wear.ui
+package unipi.msss.foodback.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,14 +17,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import unipi.msss.wear.viewmodel.HeartRateViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import unipi.msss.R
+import unipi.msss.foodback.R
+import unipi.msss.foodback.viewmodel.HeartRateViewModel
+
 
 //import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
     //val context = LocalContext.current
