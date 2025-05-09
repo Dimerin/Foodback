@@ -37,6 +37,7 @@ class HeartRateViewModel(context : Context) : ViewModel() {
             .onEach { latestEda ->
                 _uiState.value = _uiState.value.copy(latestEda = latestEda)
             }
+            .launchIn(viewModelScope)
     }
 
     fun startCollection(context: Context) {

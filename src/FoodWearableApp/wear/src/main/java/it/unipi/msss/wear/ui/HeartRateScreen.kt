@@ -40,6 +40,28 @@ fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp) // Spaziatura tra gli elementi
         ) {
+             // EDA Animation
+            LottieAnimation(
+                composition = edaComposition,
+                modifier = Modifier.size(50.dp),
+                iterations = LottieConstants.IterateForever
+            )
+
+            // EDA value
+            state.latestEda?.let { eda->
+                Text(
+                    text = "${eda.toInt()} µS",
+                    style = MaterialTheme.typography.title3,
+                    color = MaterialTheme.colors.onBackground,
+                    textAlign = TextAlign.Center
+                )
+            } ?: Text(
+                text = "No Data",
+                style = MaterialTheme.typography.title3,
+                color = MaterialTheme.colors.onBackground,
+                textAlign = TextAlign.Center
+            )
+
             // HeartRate Animation
             LottieAnimation(
                 composition = hrComposition,
@@ -62,31 +84,6 @@ fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
                 textAlign = TextAlign.Center
             )
 
-            // EDA Animation
-            LottieAnimation(
-                composition = edaComposition,
-                modifier = Modifier.size(50.dp),
-                iterations = LottieConstants.IterateForever
-            )
-
-            // EDA value
-            state.latestEda?.let { eda->
-                Text(
-                    text = "${eda.toInt()} µS",
-                    style = MaterialTheme.typography.title3,
-                    color = MaterialTheme.colors.onBackground,
-                    textAlign = TextAlign.Center
-                )
-            } ?: Text(
-                text = "No Data",
-                style = MaterialTheme.typography.title3,
-                color = MaterialTheme.colors.onBackground,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "1 µS", // Sostituisci con il valore reale
-                style = MaterialTheme.typography.body1
-            )
         }
     }
 }

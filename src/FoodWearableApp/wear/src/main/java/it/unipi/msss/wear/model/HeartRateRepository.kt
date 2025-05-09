@@ -50,7 +50,6 @@ class HeartRateRepository(private val context: Context) {
 
         sensorListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
-                Log.d("ThreadTest", "Thread name: ${Thread.currentThread().name}")
                 event?.let {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
