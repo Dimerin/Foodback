@@ -12,12 +12,23 @@ import org.json.JSONObject
 
 object DataSender {
 
-    fun sendSensorData(context: Context, heartRates: List<Float>, edaValues: List<Float>) {
+    fun List<Pair<Long, Float>>.toJsonArray(): JSONArray {
+        val jsonArray = JSONArray()
+        for ((timestamp, value) in this) {
+            val obj = JSONObject()
+            obj.put("timestamp", timestamp)
+            obj.put("value", value)
+            jsonArray.put(obj)
+        }
+        return jsonArray
+    }
+
+    fun sendSensorData(context: Context, heartRates: List<Pair<Long, Float>>, edaValues: List<Pair<Long, Float>>) {
         val client = Wearable.getMessageClient(context)
 
         val json = JSONObject().apply {
-            put("heart_rate", JSONArray(heartRates))
-            put("eda", JSONArray(edaValues))
+            put("heart_rate", heartRates.toJsonArray())
+            put("eda", edaValues.toJsonArray())
         }
         val message = json.toString()
 

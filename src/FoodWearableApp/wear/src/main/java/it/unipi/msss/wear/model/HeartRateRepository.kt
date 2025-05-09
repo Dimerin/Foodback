@@ -24,11 +24,11 @@ class HeartRateRepository(private val context: Context) {
     private var edaSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
 
-    private val _collectedHeartRates = mutableListOf<Float>()
-    val collectedHeartRates: List<Float> get() = _collectedHeartRates
+    private val _collectedHeartRates = mutableListOf<Pair<Long, Float>>()
+    val collectedHeartRates: List<Pair<Long, Float>> get() = _collectedHeartRates
 
-    private val _collectedEDA = mutableListOf<Float>()
-    val collectedEDA: List<Float> get() = _collectedEDA
+    private val _collectedEDA = mutableListOf<Pair<Long, Float>>()
+    val collectedEDA: List<Pair<Long, Float>> get() = _collectedEDA
 
     private val _latestHeartRate = MutableStateFlow<Float?>(null)
     val latestHeartRate: StateFlow<Float?> = _latestHeartRate
@@ -54,12 +54,14 @@ class HeartRateRepository(private val context: Context) {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
                             val heartRate = it.values[0]
-                            if (_isCollecting) _collectedHeartRates.add(heartRate)
+                            if (_isCollecting) _collectedHeartRates.add(
+                                Pair(System.currentTimeMillis(), heartRate))
                             _latestHeartRate.value = heartRate
                         }
                         SENSOR_TYPE_EDA -> { // EDA Sensor
                             val edaValue = it.values[0]
-                            if (_isCollecting) _collectedEDA.add(edaValue)
+                            if (_isCollecting) _collectedEDA.add(
+                                Pair(System.currentTimeMillis(), edaValue))
                             _latestEDA.value = edaValue
                         }
                     }
