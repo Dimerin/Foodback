@@ -1,5 +1,6 @@
 package unipi.msss.foodback.home.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,10 +45,15 @@ fun HomeView(
     onLoggedOut: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+
     Home(state = state, onEvent = { viewModel.onEvent(it) })
     ViewEvent(viewModel.eventsFlow) { event ->
         when (event) {
-            HomeNavigationEvents.LoggedOut -> onLoggedOut()
+            HomeNavigationEvents.LoggedOut -> {
+                onLoggedOut()
+                Toast.makeText(context, "Logged out", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }
@@ -127,6 +134,7 @@ fun Home(
             },
         )
     }
+
 }
 
 @Composable

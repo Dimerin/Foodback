@@ -13,6 +13,8 @@ data class LoginResponse(
     val surname: String,
     @SerialName("email")
     val email: String,
+    @SerialName("user_type")
+    val userType: String,
     @SerialName("access_token")
     val accessToken: String? = null,
     @SerialName("refresh_token")

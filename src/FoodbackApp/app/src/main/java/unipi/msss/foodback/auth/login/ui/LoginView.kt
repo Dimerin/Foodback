@@ -46,6 +46,7 @@ import unipi.msss.foodback.ui.theme.FoodbackTheme
 fun LoginView(
     viewModel: LoginViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit = {},
+    onLoginAdminSuccess: () -> Unit = {},
     onSignUpClicked: () -> Unit = {},
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
@@ -54,6 +55,7 @@ fun LoginView(
     ViewEvent(viewModel.eventsFlow) { event ->
         when (event) {
             LoginNavigationEvents.Authenticated -> onLoginSuccess()
+            LoginNavigationEvents.AdminAuthenticated -> onLoginAdminSuccess()
             LoginNavigationEvents.SignUp -> onSignUpClicked()
         }
     }

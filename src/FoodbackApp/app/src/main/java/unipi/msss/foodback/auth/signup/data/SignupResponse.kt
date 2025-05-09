@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SignupResponse(
     @SerialName("id")
-    val id: Int,
+    val id: Int
 )

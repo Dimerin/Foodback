@@ -76,7 +76,7 @@ class NetworkClient @Inject constructor(
     private suspend fun parseErrorMessage(response: HttpResponse): String {
         return try {
             val json = response.bodyAsText()
-            Json.decodeFromString<ErrorResponse>(json).message
+            Json.decodeFromString<ErrorResponse>(json).error
         } catch (_: Exception) {
             "Unknown client error (${response.status}): ${response.status.description}"
         }
@@ -107,4 +107,4 @@ class NetworkClient @Inject constructor(
 }
 
 @Serializable
-data class ErrorResponse(val message: String)
+data class ErrorResponse(val error: String)

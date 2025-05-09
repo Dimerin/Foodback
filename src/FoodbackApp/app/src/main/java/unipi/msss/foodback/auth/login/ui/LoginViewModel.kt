@@ -39,8 +39,8 @@ class LoginViewModel @Inject constructor(
                     updateState(_state.value.copy(emailError = "Email cannot be empty"))
                     return
                 }
-                if (_state.value.password.length < 6) {
-                    updateState(_state.value.copy(passwordError = "Password must be at least 6 characters"))
+                if (_state.value.password.isBlank()) {
+                    updateState(_state.value.copy(passwordError = "Password cannot be empty"))
                     return
                 }
                 login()
@@ -65,7 +65,14 @@ class LoginViewModel @Inject constructor(
 
         when (loginResult) {
             is NetworkResult.Success<LoginResponse> -> {
-                sendEvent(LoginNavigationEvents.Authenticated)
+                if (loginResult.data.userType == "admin") {
+                    // Logcat for debugging
+                    println("Admin user logged in")
+                    sendEvent(LoginNavigationEvents.AdminAuthenticated)
+                }
+                else{
+                    sendEvent(LoginNavigationEvents.Authenticated)
+                }
             }
 
             is NetworkResult.Error.ClientError -> {

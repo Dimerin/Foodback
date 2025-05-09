@@ -1,11 +1,13 @@
 package unipi.msss.foodback.auth.signup.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -17,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,6 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import unipi.msss.foodback.R
 import unipi.msss.foodback.commons.ViewEvent
 import unipi.msss.foodback.ui.theme.FoodbackPreview
@@ -40,7 +47,12 @@ fun SignUpView(
     onBackToLogin: () -> Unit = {},
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
-    SignUp(state.value, onEvent = { viewModel.onEvent(it) }, onBackToLogin = onBackToLogin)
+    SignUp(
+        state.value,
+        onEvent = { viewModel.onEvent(it) },
+        onBackToLogin = onBackToLogin,
+        context = LocalContext.current
+    )
 
     ViewEvent(viewModel.eventsFlow) { event ->
         when (event) {
@@ -57,6 +69,7 @@ private fun SignUp(
     state: SignUpState,
     onEvent: (SignUpEvent) -> Unit,
     onBackToLogin: () -> Unit,
+    context: Context,
 ) {
     val openDialog = remember { mutableStateOf(false) }
     val selectedDate = remember { mutableStateOf<Date?>(null) }
@@ -67,14 +80,19 @@ private fun SignUp(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create your account") },
+                title = {
+                    Text(
+                        "Create your account",
+                        fontSize = 22.sp
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackToLogin) {
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(32.dp)
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
@@ -86,23 +104,30 @@ private fun SignUp(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(padding)
+                .padding(top = 0.dp, bottom = padding.calculateBottomPadding())
                 .scale(0.8f),
             contentAlignment = Alignment.Center,
 
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Image(
+                LottieAnimation(
                     modifier = Modifier
-                        .size(200.dp),
-                    painter = painterResource(R.drawable.signup),
-                    contentDescription = "Sign Up",
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    composition = rememberLottieComposition(
+                        spec = LottieCompositionSpec.RawRes(
+                            R.raw.signup_anim
+                        )
+                    ).value,
+                    iterations = LottieConstants.IterateForever
                 )
+                Spacer(modifier = Modifier.height(10.dp))
                 Column(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = state.name,
@@ -346,12 +371,15 @@ private fun SignUp(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Button(
-                        onClick = { onEvent(SignUpEvent.SignUpClicked) },
+                        onClick = {
+                            onEvent(SignUpEvent.SignUpClicked(context = context, successIconResId = R.drawable.success))
+                        },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("Sign Up", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+
             }
         }
     }
@@ -365,7 +393,8 @@ private fun SignupPreview() {
             SignUp(
                 state = SignUpState(),
                 onEvent = {},
-                onBackToLogin = {}
+                onBackToLogin = {},
+                context = LocalContext.current
             )
         }
     }

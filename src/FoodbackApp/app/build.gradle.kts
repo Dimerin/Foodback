@@ -25,7 +25,7 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            buildConfigField("String", "BASE_URL", "\"localhost:5000\"")
+            buildConfigField("String", "BASE_URL", "\"192.168.1.7:5000\"")
         }
         release {
             isMinifyEnabled = true
@@ -33,7 +33,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            buildConfigField("String", "BASE_URL", "\"localhost:5000\"")
+            buildConfigField("String", "BASE_URL", "\"192.168.1.7:5000\"")
         }
     }
 
@@ -111,6 +111,5 @@ dependencies {
     // Debugging
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
 
 }
