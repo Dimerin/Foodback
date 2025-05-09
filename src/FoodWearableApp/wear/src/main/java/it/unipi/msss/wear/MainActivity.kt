@@ -14,6 +14,7 @@ import it.unipi.msss.wear.services.SamplingMessageListener
 import it.unipi.msss.wear.ui.HeartRateScreen
 import it.unipi.msss.wear.viewmodel.HeartRateViewModel
 import it.unipi.msss.wear.viewmodel.HeartRateViewModelFactory
+import unipi.msss.foodback.ui.theme.FoodbackTheme
 
 class MainActivity : ComponentActivity() {
     private val heartRateViewModel : HeartRateViewModel by viewModels {
@@ -51,6 +52,12 @@ class MainActivity : ComponentActivity() {
             else -> {
                 // Chiedi il permesso
                 requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
+            }
+        }
+
+        setContent {
+            FoodbackTheme {
+                HeartRateScreen()
             }
         }
     }

@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.core)
     implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.navigation.compose.jvmstubs)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
@@ -62,7 +63,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    implementation(libs.androidx.material)
+    implementation(libs.androidx.material3)
+    // Lottie
+    implementation("com.airbnb.android:lottie-compose:4.0.0")
 
 
 }
