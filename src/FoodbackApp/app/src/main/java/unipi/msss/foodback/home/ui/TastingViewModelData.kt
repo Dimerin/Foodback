@@ -19,6 +19,8 @@ data class TastingState(
     val stage: TastingStage = TastingStage.Idle,
     val sensorData: List<SensorData> = emptyList(),
     val rating: String = "",
+    val showLogoutDialog: Boolean = false,
+    val isDeviceConnected: Boolean = false,
     val showLogoutDialog: Boolean = false
 ) : ViewState {
     val protocolRunning: Boolean
@@ -26,13 +28,17 @@ data class TastingState(
 
     val stageDescription: String
         get() = when (stage) {
-            TastingStage.BringingToMouth -> "Please bring the sample to your mouth"
-            TastingStage.Recording -> "Tasting in progress"
+            TastingStage.BringingToMouth -> "Please bring the sample to your mouth and close your eyes"
+            TastingStage.Recording -> "Tasting in progress, keep your eyes closed"
             TastingStage.Finished -> "Tasting done"
-            TastingStage.AskingRating -> "Please rate the experience"
+            TastingStage.AskingRating -> "Please rate the experience from 1 to 5"
             TastingStage.Done -> "Session complete"
-            TastingStage.Idle -> "Idle"
+            TastingStage.Idle -> "Welcome to the tasting session! Read the instructions and press start to begin"
         }
+
+    val isIdle: Boolean
+        get() = stage == TastingStage.Idle
+
     val isBringingToMouth: Boolean
         get() = stage == TastingStage.BringingToMouth
 
@@ -56,10 +62,12 @@ sealed class TastingEvent : ViewEvent {
     object ShowLogoutDialog : TastingEvent()
     object ConfirmLogout : TastingEvent()
     object DismissLogoutDialog : TastingEvent()
+    data object ShareCsv : TastingEvent()
 }
 
 sealed class TastingNavigationEvents {
     data object Finished : TastingNavigationEvents()
     data class Error(val message: String) : TastingNavigationEvents()
+    data class ShareCsvFile(val uri: Uri) : TastingNavigationEvents()
     data object LoggedOut : TastingNavigationEvents()
 }

@@ -4,7 +4,8 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Environment
+import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import mylibrary.mindrove.SensorData
 import mylibrary.mindrove.ServerManager
 import unipi.msss.foodback.R
@@ -39,14 +42,67 @@ class TastingViewModel @Inject constructor(
 
     override val _state: MutableStateFlow<TastingState> = MutableStateFlow(TastingState())
 
+    private var healthCheckJob: Job? = null
+
     private val _eventsFlow = MutableSharedFlow<TastingNavigationEvents>(replay = 1)
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
 
     private var serverManager: ServerManager? = null
 
+    init {
+        startHealthCheck()
+    }
+    private fun startHealthCheck() {
+        healthCheckJob?.cancel()
+        healthCheckJob = viewModelScope.launch(ioDispatcher) {
+            while (true) {
+                delay(2000L)
+
+                // Only check when not actively recording
+                if (_state.value.stage != TastingStage.Recording) {
+                    val isDeviceTransmitting = tryConnectToDevice()
+                    _state.value = _state.value.copy(isDeviceConnected = isDeviceTransmitting)
+                }
+            }
+        }
+    }
+
+    private suspend fun tryConnectToDevice(): Boolean = withTimeoutOrNull(1500L) {
+        return@withTimeoutOrNull suspendCancellableCoroutine { cont ->
+            var isDataReceived = false
+            val tempManager = ServerManager { _ ->
+                isDataReceived = true
+                cont.resume(true) { _, _, _ -> } // Resume coroutine once data is received
+            }
+
+            try {
+                tempManager.start()
+
+                // Fallback: if no data comes within the timeout, return false
+                viewModelScope.launch {
+                    delay(1400L) // Short delay to allow data to arrive
+                    if (!isDataReceived && cont.isActive) {
+                        cont.resume(false) { _, _, _ -> }
+                    }
+                }
+
+                // Stop the temp manager once coroutine completes
+                cont.invokeOnCancellation {
+                    tempManager.stop()
+                }
+
+            } catch (e: Exception) {
+                tempManager.stop()
+                if (cont.isActive) cont.resume(false) { _, _, _ -> }
+            }
+        }
+    } ?: false // If timeout occurs
+
+
+
     companion object {
-        private const val TIME_TO_BRING = 5_000L // ms
+        private const val TIME_TO_GET_READY = 5_000L // ms
         private const val TIME_TO_TASTE = 10_000L // ms
     }
 
@@ -59,9 +115,9 @@ class TastingViewModel @Inject constructor(
             }
 
             is TastingEvent.StartProtocol -> {
-                if (!isNetworkAvailable(context)) {
+                if (!isNetworkAvailable(context) || !state.value.isDeviceConnected) {
                     viewModelScope.launch {
-                        _eventsFlow.emit(TastingNavigationEvents.Error("Network permissions are required to start the protocol."))
+                        _eventsFlow.emit(TastingNavigationEvents.Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
                     }
                     return
                 }
@@ -82,6 +138,10 @@ class TastingViewModel @Inject constructor(
 
             is TastingEvent.DeleteCsv -> {
                 deleteCsvFile()
+            }
+
+            is TastingEvent.ShareCsv -> {
+                shareCsvFile(context)
             }
 
             is TastingEvent.ShowLogoutDialog -> {
@@ -117,7 +177,7 @@ class TastingViewModel @Inject constructor(
                 setOnCompletionListener { release() }
                 start()
             }
-            delay(TIME_TO_BRING)
+            delay(TIME_TO_GET_READY)
 
             // Second beep
             _state.value = _state.value.copy(stage = TastingStage.Recording)
@@ -144,8 +204,21 @@ class TastingViewModel @Inject constructor(
             try {
                 if (buffer.isEmpty()) {
                     _eventsFlow.emit(TastingNavigationEvents.Error("No sensor data to save. Check the Mindrove connection."))
+                    _state.value = _state.value.copy(stage = TastingStage.Idle)
+                    _state.value = _state.value.copy(rating = "")
                     return@launch
                 }
+
+                val folder = File(context.getExternalFilesDir(null), "Foodback")
+                if (!folder.exists()) {
+                    folder.mkdirs()
+                }
+
+                val file = File(folder, "eeg_tasting_data.csv")
+
+
+                val experimentNumber = getExperimentNumber(file)
+
                 val rows = buffer.map { sd ->
                     listOf(
                         sd.numberOfMeasurement.toString(),
@@ -155,17 +228,14 @@ class TastingViewModel @Inject constructor(
                         sd.channel4.toString(),
                         sd.channel5.toString(),
                         sd.channel6.toString(),
+                        experimentNumber.toString(),
                         subject,
                         rating.toString()
                     ).joinToString(",")
                 }
 
-                val file = File(
-                    Environment.getExternalStorageDirectory(),
-                    "Foodback/eeg_tasting_data.csv"
-                )
                 if (!file.exists()) {
-                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,subject,rating\n")
+                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating\n")
                 }
                 file.appendText(rows.joinToString("\n", "\n"))
 
@@ -181,13 +251,20 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    private fun getExperimentNumber(file: File): Int {
+        if (!file.exists() || file.readText().isBlank()) {
+            return 1
+        }
+
+        val lastLine = file.readLines().lastOrNull()
+        return lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
+    }
+
     private fun deleteCsvFile() {
         viewModelScope.launch(ioDispatcher) {
             try {
-                val file = File(
-                    Environment.getExternalStorageDirectory(),
-                    "Foodback/eeg_tasting_data.csv"
-                )
+                val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
+
                 if (file.exists()) {
                     if (file.delete()) {
                         _eventsFlow.emit(TastingNavigationEvents.Error("CSV file deleted successfully."))
@@ -203,26 +280,46 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    private fun shareCsvFile(context: Context) {
+        val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
+        if (!file.exists()) {
+            viewModelScope.launch {
+                _eventsFlow.emit(TastingNavigationEvents.Error("CSV file does not exist."))
+            }
+            return
+        }
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "unipi.msss.foodback.fileprovider",
+            file
+        )
+
+        viewModelScope.launch {
+            _eventsFlow.emit(TastingNavigationEvents.ShareCsvFile(uri))
+        }
+    }
+
     private fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
-        return capabilities != null &&
-                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        serverManager?.stop()
-        job?.cancel()
+        return (capabilities != null) &&
+                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
     }
 
     private fun performLogout() = viewModelScope.launch {
         tastingUseCase.logout()
         updateState(_state.value.copy(showLogoutDialog = false))
         sendEvent(TastingNavigationEvents.LoggedOut)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        serverManager?.stop()
+        job?.cancel()
+        healthCheckJob?.cancel()
     }
 
 }
