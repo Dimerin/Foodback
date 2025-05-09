@@ -23,7 +23,7 @@ object AppModule {
 
     @Provides
     fun provideHttpClient(builder: FoodbackHttpClientBuilder): HttpClient = builder
-        .protocol(URLProtocol.HTTPS)
+        .protocol(URLProtocol.HTTP)
         .host(BuildConfig.BASE_URL)
         .build()
 }

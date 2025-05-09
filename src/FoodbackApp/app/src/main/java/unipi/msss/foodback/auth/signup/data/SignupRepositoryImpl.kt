@@ -37,7 +37,9 @@ data class SignupRequest(
         surname = signUpDTO.surname,
         email = signUpDTO.email,
         password = signUpDTO.password,
-        dateOfBirth = signUpDTO.dateOfBirth.toString(),
+        dateOfBirth = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE.format(
+            signUpDTO.dateOfBirth.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        ),
         gender = signUpDTO.gender,
     )
 }

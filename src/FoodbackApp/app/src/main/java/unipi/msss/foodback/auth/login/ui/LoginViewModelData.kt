@@ -24,5 +24,6 @@ sealed class LoginEvent : ViewEvent {
 
 sealed class LoginNavigationEvents {
     data object Authenticated : LoginNavigationEvents()
+    data object AdminAuthenticated : LoginNavigationEvents()
     data object SignUp : LoginNavigationEvents()
 }

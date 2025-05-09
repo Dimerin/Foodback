@@ -3,6 +3,8 @@ package unipi.msss.foodback.home.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,12 +20,15 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import unipi.msss.foodback.R
 import unipi.msss.foodback.commons.ViewEvent
+import unipi.msss.foodback.ui.theme.FoodbackPreview
+import unipi.msss.foodback.ui.theme.FoodbackTheme
 
 
 @Composable
 fun TastingView(
     viewModel: TastingViewModel = hiltViewModel(),
     onFinished: () -> Unit = {},
+    onLoggedOut: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -34,6 +39,10 @@ fun TastingView(
         when (event) {
             is TastingNavigationEvents.Finished -> onFinished()
             is TastingNavigationEvents.Error -> Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+            is TastingNavigationEvents.LoggedOut -> {
+                onLoggedOut()
+                Toast.makeText(context, "Logged out", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }
@@ -41,15 +50,24 @@ fun TastingView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TastingScreen(
-    state: TastingState,
-    onEvent: (TastingEvent) -> Unit,
+    state: TastingState = TastingState(),
+    onEvent: (TastingEvent) -> Unit = {},
 ) {
 
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tasting Protocol", fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                title = { Text("Tasting Protocol", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { onEvent.invoke(TastingEvent.ShowLogoutDialog) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ExitToApp,
+                            contentDescription = "Logout",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             )
         }
     ) { padding ->
@@ -138,6 +156,34 @@ fun TastingScreen(
 
         }
     }
+
+    // Show logout confirmation dialog
+    if (state.showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { onEvent(TastingEvent.DismissLogoutDialog) },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to log out?") },
+            confirmButton = {
+                TextButton(onClick = { onEvent(TastingEvent.ConfirmLogout) }) {
+                    Text("Yes", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onEvent(TastingEvent.DismissLogoutDialog) }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.secondary)
+                }
+            },
+        )
+    }
 }
 
 
+@Composable
+@FoodbackPreview
+private fun TastingPreview() {
+    FoodbackTheme  {
+        Surface {
+            TastingScreen()
+        }
+    }
+}

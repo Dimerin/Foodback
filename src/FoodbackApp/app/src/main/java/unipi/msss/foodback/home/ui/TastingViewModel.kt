@@ -22,37 +22,35 @@ import kotlinx.coroutines.flow.SharedFlow
 import mylibrary.mindrove.SensorData
 import mylibrary.mindrove.ServerManager
 import unipi.msss.foodback.R
+import unipi.msss.foodback.commons.EventStateViewModel
+import unipi.msss.foodback.commons.ViewModelEvents
+import unipi.msss.foodback.home.data.TastingUseCase
 import java.io.File
 import javax.inject.Inject
 
-sealed class TastingNavigationEvents {
-    data object Finished : TastingNavigationEvents()
-    data class Error(val message: String) : TastingNavigationEvents()
-}
-
 @HiltViewModel
 class TastingViewModel @Inject constructor(
+    private val tastingUseCase: TastingUseCase,
+    viewModelEvents: ViewModelEvents<TastingNavigationEvents>,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     @ApplicationContext private val context: Context
-) : ViewModel() {
+) : EventStateViewModel<TastingState, TastingEvent>(),
+    ViewModelEvents<TastingNavigationEvents> by viewModelEvents {
 
-    private val _state = MutableStateFlow(TastingState())
-    val state: StateFlow<TastingState> = _state.asStateFlow()
+    override val _state: MutableStateFlow<TastingState> = MutableStateFlow(TastingState())
 
     private val _eventsFlow = MutableSharedFlow<TastingNavigationEvents>(replay = 1)
-    val eventsFlow: SharedFlow<TastingNavigationEvents> = _eventsFlow
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
 
     private var serverManager: ServerManager? = null
-
 
     companion object {
         private const val TIME_TO_BRING = 5_000L // ms
         private const val TIME_TO_TASTE = 10_000L // ms
     }
 
-    fun onEvent(event: TastingEvent) {
+    override fun onEvent(event: TastingEvent) {
         when (event) {
             is TastingEvent.SubjectChanged -> {
                 _state.value = _state.value.copy(subject = event.value)
@@ -85,6 +83,19 @@ class TastingViewModel @Inject constructor(
             is TastingEvent.DeleteCsv -> {
                 deleteCsvFile()
             }
+
+            is TastingEvent.ShowLogoutDialog -> {
+                _state.value = _state.value.copy(showLogoutDialog = true)
+            }
+
+            is TastingEvent.DismissLogoutDialog -> {
+                _state.value = _state.value.copy(showLogoutDialog = false)
+            }
+
+            is TastingEvent.ConfirmLogout -> {
+                performLogout()
+            }
+
         }
     }
 
@@ -207,4 +218,11 @@ class TastingViewModel @Inject constructor(
         serverManager?.stop()
         job?.cancel()
     }
+
+    private fun performLogout() = viewModelScope.launch {
+        tastingUseCase.logout()
+        updateState(_state.value.copy(showLogoutDialog = false))
+        sendEvent(TastingNavigationEvents.LoggedOut)
+    }
+
 }
