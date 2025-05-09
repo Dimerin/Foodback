@@ -5,7 +5,6 @@ import mylibrary.mindrove.SensorData
 import unipi.msss.foodback.commons.ViewEvent
 import unipi.msss.foodback.commons.ViewState
 
-
 enum class TastingStage {
     Idle,
     BringingToMouth,    // after 1st beep

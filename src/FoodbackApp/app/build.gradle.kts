@@ -58,6 +58,10 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation(libs.kotlinx.coroutines.play.services)
+
 
     // Lottie
     implementation ("com.airbnb.android:lottie:6.6.6")
@@ -86,6 +90,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.play.services.wearable)
     debugImplementation(libs.androidx.ui.tooling)
     ksp(libs.hilt.compiler)
 

@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import mylibrary.mindrove.SensorData
@@ -22,8 +23,11 @@ import unipi.msss.foodback.R
 import unipi.msss.foodback.commons.EventStateViewModel
 import unipi.msss.foodback.commons.ViewModelEvents
 import unipi.msss.foodback.home.data.TastingUseCase
+import unipi.msss.foodback.services.HeartRateMessageListener
+import unipi.msss.foodback.services.Sender
 import java.io.File
 import javax.inject.Inject
+import kotlin.math.sqrt
 
 @HiltViewModel
 class TastingViewModel @Inject constructor(
@@ -306,6 +310,42 @@ class TastingViewModel @Inject constructor(
         tastingUseCase.logout()
         updateState(_state.value.copy(showLogoutDialog = false))
         sendEvent(TastingNavigationEvents.LoggedOut)
+    }
+
+    private fun startWearableSampling() {
+        try {
+            Sender.sendSamplingMessage(context)
+            //Log.d("HeartPhoneViewModel", "Start sampling inviato")
+        } catch (e: Exception) {
+            //Log.e("HeartRateViewModel", "Errore durante invio", e)
+        }
+    }
+
+    private fun collectWearableData(){
+
+        viewModelScope.launch {
+            HeartRateMessageListener.heartRateFlow.collect { heartRates ->
+                if (heartRates.isNotEmpty()) {
+                    /*
+                    val avg = heartRates.average()
+                    val stdev = sqrt(heartRates.map { (it - avg).pow(2) }.average())
+                    _uiState.value = _uiState.value.copy(lastAvg = avg, lastStdev = stdev)
+                    */
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            HeartRateMessageListener.edaFlow.collect { edaValues ->
+                if (edaValues.isNotEmpty()) {
+                    /*
+                    val avg = edaValues.average()
+                    val stdev = sqrt(edaValues.map { (it - avg).pow(2) }.average())
+                    _uiState.value = _uiState.value.copy(edaAvg = avg, edaStdev = stdev)
+                    */
+                }
+            }
+        }
     }
 
     override fun onCleared() {
