@@ -1,5 +1,6 @@
 package unipi.msss.foodback.home.ui
 
+import android.net.Uri
 import mylibrary.mindrove.SensorData
 import unipi.msss.foodback.commons.ViewEvent
 import unipi.msss.foodback.commons.ViewState
@@ -19,7 +20,6 @@ data class TastingState(
     val stage: TastingStage = TastingStage.Idle,
     val sensorData: List<SensorData> = emptyList(),
     val rating: String = "",
-    val showLogoutDialog: Boolean = false,
     val isDeviceConnected: Boolean = false,
     val showLogoutDialog: Boolean = false
 ) : ViewState {
@@ -33,7 +33,7 @@ data class TastingState(
             TastingStage.Finished -> "Tasting done"
             TastingStage.AskingRating -> "Please rate the experience from 1 to 5"
             TastingStage.Done -> "Session complete"
-            TastingStage.Idle -> "Welcome to the tasting session! Read the instructions and press start to begin"
+            TastingStage.Idle -> "Welcome to the tasting session. Read the instructions and press start to begin!"
         }
 
     val isIdle: Boolean

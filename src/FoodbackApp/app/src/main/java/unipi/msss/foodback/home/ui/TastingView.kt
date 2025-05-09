@@ -17,12 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -138,7 +136,7 @@ fun TastingScreen(
 
             Button(
                 onClick = { onEvent(TastingEvent.StartProtocol) },
-                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning,
+                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning && !state.isDeviceConnected,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Start Protocol")
@@ -315,6 +313,7 @@ fun TastingScreen(
                 }
             }
         }
+    }
     
     // Show logout confirmation dialog
     if (state.showLogoutDialog) {
@@ -334,6 +333,7 @@ fun TastingScreen(
             },
         )
     }
+
 }
 
 

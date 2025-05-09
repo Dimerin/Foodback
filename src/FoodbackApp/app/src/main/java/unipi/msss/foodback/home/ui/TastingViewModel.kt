@@ -4,9 +4,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.Uri
 import androidx.core.content.FileProvider
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,12 +12,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import mylibrary.mindrove.SensorData
@@ -44,7 +38,6 @@ class TastingViewModel @Inject constructor(
 
     private var healthCheckJob: Job? = null
 
-    private val _eventsFlow = MutableSharedFlow<TastingNavigationEvents>(replay = 1)
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
 
@@ -117,7 +110,7 @@ class TastingViewModel @Inject constructor(
             is TastingEvent.StartProtocol -> {
                 if (!isNetworkAvailable(context) || !state.value.isDeviceConnected) {
                     viewModelScope.launch {
-                        _eventsFlow.emit(TastingNavigationEvents.Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
+                        sendEvent(TastingNavigationEvents.Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
                     }
                     return
                 }
@@ -203,7 +196,7 @@ class TastingViewModel @Inject constructor(
         viewModelScope.launch(ioDispatcher) {
             try {
                 if (buffer.isEmpty()) {
-                    _eventsFlow.emit(TastingNavigationEvents.Error("No sensor data to save. Check the Mindrove connection."))
+                    sendEvent(TastingNavigationEvents.Error("No sensor data to save. Check the Mindrove connection."))
                     _state.value = _state.value.copy(stage = TastingStage.Idle)
                     _state.value = _state.value.copy(rating = "")
                     return@launch
@@ -244,9 +237,9 @@ class TastingViewModel @Inject constructor(
                 _state.value = _state.value.copy(rating = "")
                 _state.value = _state.value.copy(subject = "")
                 buffer.clear()
-                _eventsFlow.emit(TastingNavigationEvents.Finished)
+                sendEvent(TastingNavigationEvents.Finished)
             } catch (e: Exception) {
-                _eventsFlow.emit(TastingNavigationEvents.Error("Failed to save data: ${e.message}"))
+                sendEvent(TastingNavigationEvents.Error("Failed to save data: ${e.message}"))
             }
         }
     }
@@ -267,15 +260,15 @@ class TastingViewModel @Inject constructor(
 
                 if (file.exists()) {
                     if (file.delete()) {
-                        _eventsFlow.emit(TastingNavigationEvents.Error("CSV file deleted successfully."))
+                        sendEvent(TastingNavigationEvents.Error("CSV file deleted successfully."))
                     } else {
-                        _eventsFlow.emit(TastingNavigationEvents.Error("Failed to delete CSV file."))
+                        sendEvent(TastingNavigationEvents.Error("Failed to delete CSV file."))
                     }
                 } else {
-                    _eventsFlow.emit(TastingNavigationEvents.Error("CSV file does not exist."))
+                    sendEvent(TastingNavigationEvents.Error("CSV file does not exist."))
                 }
             } catch (e: Exception) {
-                _eventsFlow.emit(TastingNavigationEvents.Error("Failed to delete CSV file: ${e.message}"))
+                sendEvent(TastingNavigationEvents.Error("Failed to delete CSV file: ${e.message}"))
             }
         }
     }
@@ -284,7 +277,7 @@ class TastingViewModel @Inject constructor(
         val file = File(context.getExternalFilesDir(null), "Foodback/eeg_tasting_data.csv")
         if (!file.exists()) {
             viewModelScope.launch {
-                _eventsFlow.emit(TastingNavigationEvents.Error("CSV file does not exist."))
+                sendEvent(TastingNavigationEvents.Error("CSV file does not exist."))
             }
             return
         }
@@ -296,7 +289,7 @@ class TastingViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            _eventsFlow.emit(TastingNavigationEvents.ShareCsvFile(uri))
+            sendEvent(TastingNavigationEvents.ShareCsvFile(uri))
         }
     }
 
