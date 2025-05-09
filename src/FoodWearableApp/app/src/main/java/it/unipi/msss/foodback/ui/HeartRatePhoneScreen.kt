@@ -31,16 +31,29 @@ fun HeartRatePhoneScreen(viewModel: HeartRatePhoneViewModel = viewModel()) {
 
             if (state.lastAvg != null && state.lastStdev != null) {
                 Text(
-                    text = "Media: ${String.format("%.1f", state.lastAvg)} BPM",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
+                    text = "Media HR: ${String.format("%.1f", state.lastAvg)} BPM",
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "Deviazione Std: ${String.format("%.1f", state.lastStdev)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                    text = "Deviazione HR: ${String.format("%.1f", state.lastStdev)}",
+                    style = MaterialTheme.typography.bodyMedium
                 )
-            } else {
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (state.edaAvg != null && state.edaStdev != null) {
+                Text(
+                    text = "Media EDA: ${String.format("%.2f", state.edaAvg)} µS",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "Deviazione EDA: ${String.format("%.2f", state.edaStdev)}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (state.lastAvg == null && state.edaAvg == null) {
                 Text(
                     text = "In attesa di dati...",
                     style = MaterialTheme.typography.bodyMedium,

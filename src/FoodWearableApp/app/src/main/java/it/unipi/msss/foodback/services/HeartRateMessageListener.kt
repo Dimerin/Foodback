@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class HeartRateMessageListener : MessageClient.OnMessageReceivedListener {
 
@@ -14,26 +15,34 @@ class HeartRateMessageListener : MessageClient.OnMessageReceivedListener {
         const val TAG = "HeartRateListener"
         const val PATH = "/sensor_series"
 
-        val heartRateFlow = MutableSharedFlow<Pair<Double, Double>>()  // (avg, stdev)
+        val heartRateFlow = MutableSharedFlow<List<Float>>()  // Emitting heart rate list
+        val edaFlow = MutableSharedFlow<List<Float>>()         // Emitting EDA list
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "$messageEvent")
         if (messageEvent.path == PATH) {
             val message = String(messageEvent.data)
-            Log.d(TAG, "Messaggio ricevuto: $message")
+            Log.d(TAG, "Received Message: $message")
 
-            val regex = Regex("avg:([0-9.]+);stdev:([0-9.]+)")
-            val match = regex.find(message)
-            if (match != null) {
-                val avg = match.groupValues[1].toDouble()
-                val stdev = match.groupValues[2].toDouble()
+            try {
+                val json = JSONObject(message)
+                val heartRateJsonArray = json.getJSONArray("heart_rate")
+                val edaJsonArray = json.getJSONArray("eda")
+
+                val heartRates = List(heartRateJsonArray.length()) { i ->
+                    heartRateJsonArray.getDouble(i).toFloat()
+                }
+
+                val edaValues = List(edaJsonArray.length()) { i ->
+                    edaJsonArray.getDouble(i).toFloat()
+                }
 
                 CoroutineScope(Dispatchers.Main).launch {
-                    heartRateFlow.emit(avg to stdev)
+                    heartRateFlow.emit(heartRates)
+                    edaFlow.emit(edaValues)
                 }
-            } else {
-                Log.e(TAG, "Formato messaggio non valido: $message")
+            } catch (e: Exception) {
+                Log.e(TAG, "Errore during parsing of json message: ${e.message}", e)
             }
         }
     }

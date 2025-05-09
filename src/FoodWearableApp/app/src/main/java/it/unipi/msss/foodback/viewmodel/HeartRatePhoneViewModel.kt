@@ -9,10 +9,14 @@ import it.unipi.msss.foodback.services.Sender
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 data class PhoneHeartRateState(
     val lastAvg: Double? = null,
-    val lastStdev: Double? = null
+    val lastStdev: Double? = null,
+    val edaAvg: Double? = null,
+    val edaStdev: Double? = null
 )
 
 class HeartRatePhoneViewModel(application: Application) : AndroidViewModel(application) {
@@ -22,10 +26,25 @@ class HeartRatePhoneViewModel(application: Application) : AndroidViewModel(appli
 
     init {
         viewModelScope.launch {
-            HeartRateMessageListener.heartRateFlow.collect { (avg, stdev) ->
-                _uiState.value = PhoneHeartRateState(lastAvg = avg, lastStdev = stdev)
+            HeartRateMessageListener.heartRateFlow.collect { heartRates ->
+                if (heartRates.isNotEmpty()) {
+                    val avg = heartRates.average()
+                    val stdev = sqrt(heartRates.map { (it - avg).pow(2) }.average())
+                    _uiState.value = _uiState.value.copy(lastAvg = avg, lastStdev = stdev)
+                }
             }
         }
+
+        viewModelScope.launch {
+            HeartRateMessageListener.edaFlow.collect { edaValues ->
+                if (edaValues.isNotEmpty()) {
+                    val avg = edaValues.average()
+                    val stdev = sqrt(edaValues.map { (it - avg).pow(2) }.average())
+                    _uiState.value = _uiState.value.copy(edaAvg = avg, edaStdev = stdev)
+                }
+            }
+        }
+
         try {
             Sender.sendSamplingMessage(application)
             Log.d("HeartPhoneViewModel", "Start sampling inviato")
