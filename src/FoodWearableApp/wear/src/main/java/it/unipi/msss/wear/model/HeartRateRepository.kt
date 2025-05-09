@@ -24,10 +24,10 @@ class HeartRateRepository(private val context: Context) {
     private var heartRateSensor: Sensor? = null
     private var edaSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
-    private val _collectedHeartRates = Collections.synchronizedList(mutableListOf<Pair<Long, Float>>)
+    private val _collectedHeartRates = Collections.synchronizedList(mutableListOf<Pair<Long, Float>>())
     val collectedHeartRates: List<Pair<Long, Float>> get() = _collectedHeartRates
 
-    private val _collectedEDA = Collections.synchronizedList(mutableListOf<Pair<Long, Float>>)
+    private val _collectedEDA = Collections.synchronizedList(mutableListOf<Pair<Long, Float>>())
     val collectedEDA: List<Pair<Long, Float>> get() = _collectedEDA
 
     private val _latestHeartRate = MutableStateFlow<Float?>(null)
