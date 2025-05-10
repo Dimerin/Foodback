@@ -104,22 +104,18 @@ private fun SignUp(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(top = 0.dp, bottom = padding.calculateBottomPadding())
-                .scale(0.8f),
+                .padding(padding),
             contentAlignment = Alignment.Center,
-
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 LottieAnimation(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp),
+                        .height(200.dp),
                     composition = rememberLottieComposition(
                         spec = LottieCompositionSpec.RawRes(
                             R.raw.signup_anim
@@ -127,241 +123,265 @@ private fun SignUp(
                     ).value,
                     iterations = LottieConstants.IterateForever
                 )
-                Spacer(modifier = Modifier.height(10.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = state.name,
-                        onValueChange = { onEvent(SignUpEvent.NameChanged(it)) },
-                        label = { Text("Name") },
-                        placeholder = { Text("Enter your name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = state.nameError != null,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AnimatedVisibility(visible = state.nameError != null) {
-                        Text(
-                            text = state.nameError.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = state.surname,
-                        onValueChange = { onEvent(SignUpEvent.SurnameChanged(it)) },
-                        label = { Text("Surname") },
-                        placeholder = { Text("Enter your surname") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = state.surnameError != null,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AnimatedVisibility(visible = state.surnameError != null) {
-                        Text(
-                            text = state.surnameError.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = state.email,
-                        onValueChange = { onEvent(SignUpEvent.EmailChanged(it)) },
-                        label = { Text("Email") },
-                        placeholder = { Text("Enter your email") },
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        singleLine = true,
-                        isError = state.emailError != null,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AnimatedVisibility(visible = state.emailError != null) {
-                        Text(
-                            text = state.emailError.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                ElevatedCard( elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp
+                ),
+                    modifier = Modifier.size(width = 500.dp, height = 750.dp)
+                        .padding(16.dp).
+                        scale(0.9f),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = state.gender == "Male",
-                            onClick = { onEvent(SignUpEvent.GenderChanged("Male")) },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        Text(
-                            text = "Male",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = state.gender == "Female",
-                            onClick = { onEvent(SignUpEvent.GenderChanged("Female")) },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        Text(
-                            text = "Female",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-
-                    }
-                }
-                AnimatedVisibility(visible = state.genderError != null) {
-                    Text(
-                        text = state.genderError.orEmpty(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = formattedDate,
-                        onValueChange = {},
-                        label = { Text("Date of Birth") },
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { openDialog.value = !openDialog.value }) {
-                                Icon(
-                                    imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Select date"
-                                )
-                            }
-                        },
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(64.dp),
-                        isError = state.dateOfBirthError != null,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AnimatedVisibility(visible = state.dateOfBirthError != null) {
-                        Text(
-                            text = state.dateOfBirthError.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-                if (openDialog.value) {
-                    val datePickerState = rememberDatePickerState()
-                    val confirmEnabled =
-                        derivedStateOf { datePickerState.selectedDateMillis != null }
-                    DatePickerDialog(
-                        onDismissRequest = { openDialog.value = false },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    openDialog.value = false
-                                    val date = datePickerState.selectedDateMillis?.let { Date(it) }
-                                    if (date != null) {
-                                        selectedDate.value = date
-                                        onEvent(SignUpEvent.DateOfBirthChanged(date))
-                                    }
-                                },
-                                enabled = confirmEnabled.value
-                            ) {
-                                Text("OK")
-                            }
-                        }
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        DatePicker(state = datePickerState)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = state.password,
-                        onValueChange = { onEvent(SignUpEvent.PasswordChanged(it)) },
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter your password") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { onEvent(SignUpEvent.TogglePasswordVisibility) }) {
-                                Icon(
-                                    modifier = Modifier.padding(end = 4.dp),
-                                    painter = painterResource(if (state.isPasswordVisible) R.drawable.ic_eye_open else R.drawable.ic_eye_closed),
-                                    contentDescription = "Password Visibility Toggle",
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = state.passwordError != null,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AnimatedVisibility(visible = state.passwordError != null) {
                         Text(
-                            text = state.passwordError.orEmpty(),
+                            text = "Signup",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = state.name,
+                            onValueChange = { onEvent(SignUpEvent.NameChanged(it)) },
+                            label = { Text("Name") },
+                            placeholder = { Text("Enter your name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.nameError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.nameError != null) {
+                            Text(
+                                text = state.nameError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = state.surname,
+                            onValueChange = { onEvent(SignUpEvent.SurnameChanged(it)) },
+                            label = { Text("Surname") },
+                            placeholder = { Text("Enter your surname") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.surnameError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.surnameError != null) {
+                            Text(
+                                text = state.surnameError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = state.email,
+                            onValueChange = { onEvent(SignUpEvent.EmailChanged(it)) },
+                            label = { Text("Email") },
+                            placeholder = { Text("Enter your email") },
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.emailError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.emailError != null) {
+                            Text(
+                                text = state.emailError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = state.gender == "Male",
+                                onClick = { onEvent(SignUpEvent.GenderChanged("Male")) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            Text(
+                                text = "Male",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = state.gender == "Female",
+                                onClick = { onEvent(SignUpEvent.GenderChanged("Female")) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            Text(
+                                text = "Female",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+
+                        }
+                    }
+                    AnimatedVisibility(visible = state.genderError != null) {
+                        Text(
+                            text = state.genderError.orEmpty(),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = state.confirmPassword,
-                        onValueChange = { onEvent(SignUpEvent.ConfirmPasswordChanged(it)) },
-                        label = { Text("Confirm Password") },
-                        placeholder = { Text("Re-enter your password") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        visualTransformation = if (state.isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { onEvent(SignUpEvent.ToggleConfirmPasswordVisibility) }) {
-                                Icon(
-                                    modifier = Modifier.padding(end = 4.dp),
-                                    painter = painterResource(if (state.isConfirmPasswordVisible) R.drawable.ic_eye_open else R.drawable.ic_eye_closed),
-                                    contentDescription = "Password Visibility Toggle",
-                                )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = formattedDate,
+                            onValueChange = {},
+                            label = { Text("Date of Birth") },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { openDialog.value = !openDialog.value }) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "Select date"
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(64.dp),
+                            isError = state.dateOfBirthError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.dateOfBirthError != null) {
+                            Text(
+                                text = state.dateOfBirthError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    if (openDialog.value) {
+                        val datePickerState = rememberDatePickerState()
+                        val confirmEnabled =
+                            derivedStateOf { datePickerState.selectedDateMillis != null }
+                        DatePickerDialog(
+                            onDismissRequest = { openDialog.value = false },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        openDialog.value = false
+                                        val date =
+                                            datePickerState.selectedDateMillis?.let { Date(it) }
+                                        if (date != null) {
+                                            selectedDate.value = date
+                                            onEvent(SignUpEvent.DateOfBirthChanged(date))
+                                        }
+                                    },
+                                    enabled = confirmEnabled.value
+                                ) {
+                                    Text("OK")
+                                }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = state.confirmPasswordError != null,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AnimatedVisibility(visible = state.confirmPasswordError != null) {
+                        ) {
+                            DatePicker(state = datePickerState)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = state.password,
+                            onValueChange = { onEvent(SignUpEvent.PasswordChanged(it)) },
+                            label = { Text("Password") },
+                            placeholder = { Text("Enter your password") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { onEvent(SignUpEvent.TogglePasswordVisibility) }) {
+                                    Icon(
+                                        modifier = Modifier.padding(end = 4.dp),
+                                        painter = painterResource(if (state.isPasswordVisible) R.drawable.ic_eye_open else R.drawable.ic_eye_closed),
+                                        contentDescription = "Password Visibility Toggle",
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.passwordError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.passwordError != null) {
+                            Text(
+                                text = state.passwordError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = state.confirmPassword,
+                            onValueChange = { onEvent(SignUpEvent.ConfirmPasswordChanged(it)) },
+                            label = { Text("Confirm Password") },
+                            placeholder = { Text("Re-enter your password") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = if (state.isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { onEvent(SignUpEvent.ToggleConfirmPasswordVisibility) }) {
+                                    Icon(
+                                        modifier = Modifier.padding(end = 4.dp),
+                                        painter = painterResource(if (state.isConfirmPasswordVisible) R.drawable.ic_eye_open else R.drawable.ic_eye_closed),
+                                        contentDescription = "Password Visibility Toggle",
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.confirmPasswordError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.confirmPasswordError != null) {
+                            Text(
+                                text = state.confirmPasswordError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    AnimatedVisibility(visible = state.signupError != null) {
                         Text(
-                            text = state.confirmPasswordError.orEmpty(),
+                            text = state.signupError.orEmpty(),
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                AnimatedVisibility(visible = state.signupError != null) {
-                    Text(
-                        text = state.signupError.orEmpty(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
+                    }
                 }
                 Column(
                     modifier = Modifier
@@ -374,12 +394,13 @@ private fun SignUp(
                         onClick = {
                             onEvent(SignUpEvent.SignUpClicked(context = context, successIconResId = R.drawable.success))
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth()
+                            .scale(0.8f),
                     ) {
                         Text("Sign Up", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

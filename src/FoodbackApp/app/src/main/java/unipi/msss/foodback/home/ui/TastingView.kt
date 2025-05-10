@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import kotlinx.coroutines.launch
 import unipi.msss.foodback.R
 import unipi.msss.foodback.commons.ViewEvent
 import unipi.msss.foodback.ui.theme.FoodbackPreview
@@ -75,7 +77,9 @@ fun TastingScreen(
     state: TastingState = TastingState(),
     onEvent: (TastingEvent) -> Unit = {},
 ) {
-
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    var showBottomSheet by remember { mutableStateOf(false) }
     val textColor = MaterialTheme.colorScheme.primary
 
     Scaffold(
@@ -283,115 +287,183 @@ fun TastingScreen(
                     }
                 }
             }
+
             Spacer(Modifier.weight(1f))
             if (state.isFinished || state.isIdle) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                {
-                    Icon(
-                        painter = painterResource(id = if (state.isEEGConnected) R.drawable.eeg_connected else R.drawable.eeg_disconnected),
-                        contentDescription = "EEG Device Status",
-                        tint = if (state.isEEGConnected) Color.Green else Color.Red,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Icon(
-                        painter = painterResource(id = if (state.isWatchConnected) R.drawable.watch_connected else R.drawable.watch_disconnected),
-                        contentDescription = "EEG Device Status",
-                        tint = if (state.isWatchConnected) Color.Green else Color.Red,
-                        modifier = Modifier.size(64.dp)
-                    )
-                }
+                ElevatedCard( elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp
+                ),
+                    modifier = Modifier.size(width = 250.dp, height = 150.dp)
+                ){
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = "Devices Status",
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
 
+
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        {
+                            Icon(
+                                painter = painterResource(id = if (state.isEEGConnected) R.drawable.eeg_connected else R.drawable.eeg_disconnected),
+                                contentDescription = "EEG Device Status",
+                                tint = if (state.isEEGConnected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Icon(
+                                painter = painterResource(id = if (state.isWatchConnected) R.drawable.watch_connected else R.drawable.watch_disconnected),
+                                contentDescription = "EEG Device Status",
+                                tint = if (state.isWatchConnected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(Modifier.height(24.dp))
             }
             Spacer(Modifier.weight(1f))
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "eeg_tasting_data.csv",
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f)
-                )
 
-                IconButton(onClick = { onEvent(TastingEvent.DeleteEEGCsv) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete CSV File",
-                        tint = MaterialTheme.colorScheme.tertiary
-                    )
+            ExtendedFloatingActionButton(
+                text = { Text("Manage CSV Files") },
+                icon = { Icon(Icons.Filled.Edit, contentDescription = "") },
+                onClick = {
+                    showBottomSheet = true
                 }
+            )
 
-                IconButton(onClick = { onEvent(TastingEvent.ShareEEGCsv) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Share,
-                        contentDescription = "Share CSV File",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            if (showBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        showBottomSheet = false
+                    },
+                    sheetState = sheetState,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "heart_rate_data.csv",
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f)
-                )
 
-                IconButton(onClick = { onEvent(TastingEvent.DeleteHRCsv) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete CSV File",
-                        tint = MaterialTheme.colorScheme.tertiary
-                    )
-                }
+                    ) {
+                        Text(
+                            text = "Manage CSV Files",
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
 
-                IconButton(onClick = { onEvent(TastingEvent.ShareHRCsv) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Share,
-                        contentDescription = "Share CSV File",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "eda_data.csv",
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f)
-                )
+                        // Sheet content
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "eeg_tasting_data.csv",
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(1f)
+                            )
 
-                IconButton(onClick = { onEvent(TastingEvent.DeleteEDACsv) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete CSV File",
-                        tint = MaterialTheme.colorScheme.tertiary
-                    )
-                }
+                            IconButton(onClick = { onEvent(TastingEvent.DeleteEEGCsv) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Delete CSV File",
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
 
-                IconButton(onClick = { onEvent(TastingEvent.ShareEDACsv) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Share,
-                        contentDescription = "Share CSV File",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                            IconButton(onClick = { onEvent(TastingEvent.ShareEEGCsv) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Share,
+                                    contentDescription = "Share CSV File",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "heart_rate_data.csv",
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            IconButton(onClick = { onEvent(TastingEvent.DeleteHRCsv) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Delete CSV File",
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+
+                            IconButton(onClick = { onEvent(TastingEvent.ShareHRCsv) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Share,
+                                    contentDescription = "Share CSV File",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "eda_data.csv",
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            IconButton(onClick = { onEvent(TastingEvent.DeleteEDACsv) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Delete CSV File",
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+
+                            IconButton(onClick = { onEvent(TastingEvent.ShareEDACsv) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Share,
+                                    contentDescription = "Share CSV File",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    if (!sheetState.isVisible) {
+                                        showBottomSheet = false
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
                 }
             }
         }
     }
+
+
     
     // Show logout confirmation dialog
     if (state.showLogoutDialog) {
@@ -411,7 +483,6 @@ fun TastingScreen(
             },
         )
     }
-
 }
 
 

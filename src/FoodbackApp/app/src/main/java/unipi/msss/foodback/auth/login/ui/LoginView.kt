@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -83,96 +85,112 @@ private fun Login(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = null,
             )
+            ElevatedCard( elevation = CardDefaults.cardElevation(
+                defaultElevation = 6.dp
+            ),
+                modifier = Modifier.size(width = 500.dp, height = 300.dp).padding(16.dp)
+            ){
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ){
 
-            Text(
-                text = "Welcome in Foodback!",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            Text(
-                text = "Login to continue",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-
-            Column(modifier = Modifier.fillMaxWidth().scale(0.8f)) {
-                OutlinedTextField(
-                    value = state.email,
-                    onValueChange = { onEvent(LoginEvent.EmailChanged(it)) },
-                    label = { Text("Email") },
-                    placeholder = { Text("Enter your email") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = state.emailError != null,
+                Text(
+                    text = "Welcome in Foodback!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
                 )
-                Spacer(modifier = Modifier.height(4.dp)) // Space for error message
-                AnimatedVisibility(visible = state.emailError != null) {
-                    Text(
-                        text = state.emailError.orEmpty(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
 
-            Column(modifier = Modifier.fillMaxWidth().scale(0.8f)) {
-                OutlinedTextField(
-                    value = state.password,
-                    onValueChange = { onEvent(LoginEvent.PasswordChanged(it)) },
-                    label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { onEvent(LoginEvent.TogglePasswordVisibility) }) {
-                            Icon(
-                                modifier = Modifier.padding(end = 4.dp),
-                                painter = painterResource(if (state.isPasswordVisible) R.drawable.ic_eye_open else R.drawable.ic_eye_closed),
-                                contentDescription = "Password Visibility Toggle",
+                Text(
+                    text = "Login to continue",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                        .scale(0.8f),
+                        ) {
+                        OutlinedTextField(
+                            value = state.email,
+                            onValueChange = { onEvent(LoginEvent.EmailChanged(it)) },
+                            label = { Text("Email") },
+                            placeholder = { Text("Enter your email") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.emailError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp)) // Space for error message
+                        AnimatedVisibility(visible = state.emailError != null) {
+                            Text(
+                                text = state.emailError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
                             )
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = state.passwordError != null,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                AnimatedVisibility(visible = state.passwordError != null) {
+                    }
+
+                    Column(modifier = Modifier.fillMaxWidth().scale(0.8f)) {
+                        OutlinedTextField(
+                            value = state.password,
+                            onValueChange = { onEvent(LoginEvent.PasswordChanged(it)) },
+                            label = { Text("Password") },
+                            placeholder = { Text("Enter your password") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { onEvent(LoginEvent.TogglePasswordVisibility) }) {
+                                    Icon(
+                                        modifier = Modifier.padding(end = 4.dp),
+                                        painter = painterResource(if (state.isPasswordVisible) R.drawable.ic_eye_open else R.drawable.ic_eye_closed),
+                                        contentDescription = "Password Visibility Toggle",
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = state.passwordError != null,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(visible = state.passwordError != null) {
+                            Text(
+                                text = state.passwordError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+                AnimatedVisibility(visible = state.loginError != null) {
                     Text(
-                        text = state.passwordError.orEmpty(),
+                        text = state.loginError.orEmpty(),
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
 
-            AnimatedVisibility(visible = state.loginError != null) {
-                Text(
-                    text = state.loginError.orEmpty(),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-
-            Button(
-                onClick = { onEvent(LoginEvent.LoginClicked) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .scale(0.8f),
-                enabled = !state.isLoading,
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                    )
-                } else {
-                    Text("Login", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = { onEvent(LoginEvent.LoginClicked) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .scale(0.8f),
+                    enabled = !state.isLoading,
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    } else {
+                        Text("Login", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
-            }
 
 
                 Row(

@@ -12,7 +12,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import unipi.msss.foodback.ui.theme.FoodbackTheme
 
 
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
