@@ -10,29 +10,34 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import unipi.msss.foodback.model.HeartRateRepository
+import unipi.msss.foodback.model.SensorRepository
 
-data class HeartRateUiState(
+data class WearableUiState(
     val latestHeartRate: Float? = null,
     val latestEda: Float? = null,
     val isCollecting: Boolean = false,
     val error: String? = null
 )
-class HeartRateViewModel(context : Context) : ViewModel() {
-    private val heartRateRepository =
-        HeartRateRepository(context.applicationContext)
-    private val _uiState = MutableStateFlow(HeartRateUiState())
-    val uiState: StateFlow<HeartRateUiState> = _uiState
+class WearableViewModel(context : Context) : ViewModel() {
+
+    companion object {
+        const val TAG = "WearableViewModel"
+    }
+
+    private val sensorRepository =
+        SensorRepository(context.applicationContext)
+    private val _uiState = MutableStateFlow(WearableUiState())
+    val uiState: StateFlow<WearableUiState> = _uiState
 
     init {
-        heartRateRepository.start()
+        sensorRepository.start()
 
-        heartRateRepository.latestHeartRate
+        sensorRepository.latestHeartRate
             .onEach { latestHeartRate ->
                 _uiState.value = _uiState.value.copy(latestHeartRate = latestHeartRate)
             }
             .launchIn(viewModelScope)
-        heartRateRepository.latestEDA
+        sensorRepository.latestEDA
             .onEach { latestEda ->
                 _uiState.value = _uiState.value.copy(latestEda = latestEda)
             }
@@ -43,7 +48,7 @@ class HeartRateViewModel(context : Context) : ViewModel() {
         if (_uiState.value.isCollecting) {
             return
         }
-        heartRateRepository.startCollecting()
+        sensorRepository.startCollecting()
         _uiState.value = _uiState.value.copy(isCollecting = true)
 
         viewModelScope.launch {
@@ -54,26 +59,26 @@ class HeartRateViewModel(context : Context) : ViewModel() {
     }
 
     fun stopCollection() {
-        heartRateRepository.stopCollecting()
+        sensorRepository.stopCollecting()
         _uiState.value = _uiState.value.copy(isCollecting = false)
     }
 
     fun saveData(context: Context) {
         try {
-            val collectedHeartRates = heartRateRepository.collectedHeartRates
-            val collectedEDA = heartRateRepository.collectedEDA
+            val collectedHeartRates = sensorRepository.collectedHeartRates
+            val collectedEDA = sensorRepository.collectedEDA
             val dataToSave =
             DataSender.sendSensorData(context, collectedHeartRates, collectedEDA)
-            Log.d("HeartRateViewModel", "Dati salvati: $dataToSave")
-            heartRateRepository.clearData()
+            Log.d(TAG, "Saved Data: $dataToSave")
+            sensorRepository.clearData()
         } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(error = "Errore durante il salvataggio dei dati: ${e.message}")
-            Log.e("HeartRateViewModel", "Errore durante il salvataggio dei dati", e)
+            _uiState.value = _uiState.value.copy(error = "Error while saving data: ${e.message}")
+            Log.e(TAG, "Error while saving data", e)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        heartRateRepository.stop()
+        sensorRepository.stop()
     }
 }

@@ -13,10 +13,10 @@ import org.json.JSONObject
 data class WearableData(val timestamp: Long, val value: Float)
 
 
-class HeartRateMessageListener : MessageClient.OnMessageReceivedListener {
+class WearableMessageListener : MessageClient.OnMessageReceivedListener {
 
     companion object {
-        const val TAG = "HeartRateListener"
+        const val TAG = "WearableMessageListener"
         const val PATH = "/sensor_series"
 
         val heartRateFlow = MutableSharedFlow<List<WearableData>>()

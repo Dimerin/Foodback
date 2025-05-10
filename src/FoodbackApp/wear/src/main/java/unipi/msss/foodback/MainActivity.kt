@@ -11,53 +11,48 @@ import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.Wearable
 import unipi.msss.foodback.services.SamplingMessageListener
-import unipi.msss.foodback.ui.HeartRateScreen
+import unipi.msss.foodback.ui.WearableScreen
 import unipi.msss.foodback.ui.theme.FoodbackTheme
-import unipi.msss.foodback.viewmodel.HeartRateViewModel
-import unipi.msss.foodback.viewmodel.HeartRateViewModelFactory
+import unipi.msss.foodback.viewmodel.WearableViewModel
+import unipi.msss.foodback.viewmodel.WearableViewModelFactory
 
 class MainActivity : ComponentActivity() {
-    private val heartRateViewModel : HeartRateViewModel by viewModels {
-        HeartRateViewModelFactory(applicationContext)
+    private val wearableViewModel : WearableViewModel by viewModels {
+        WearableViewModelFactory(applicationContext)
     }
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
-                Toast.makeText(this, "Permesso concesso", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
                 setContent {
-                    HeartRateScreen(viewModel = heartRateViewModel)
+                    FoodbackTheme {
+                        WearableScreen(viewModel = wearableViewModel)
+                    }
                 }
             } else {
-                Toast.makeText(this, "Permesso negato", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
             }
         }
     private var samplingMessageListener: SamplingMessageListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        samplingMessageListener = SamplingMessageListener(applicationContext, heartRateViewModel)
+        samplingMessageListener = SamplingMessageListener(applicationContext, wearableViewModel)
         Wearable.getMessageClient(this).addListener(samplingMessageListener!!)
 
-        // Controlla se il permesso è già stato concesso
         when {
             ContextCompat.checkSelfPermission(
                 this, Manifest.permission.BODY_SENSORS
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // Il permesso è già concesso, procedi con la logica
                 setContent {
-                    HeartRateScreen(viewModel = heartRateViewModel)
+                    FoodbackTheme {
+                        WearableScreen(viewModel = wearableViewModel)
+                    }
                 }
             }
             else -> {
-                // Chiedi il permesso
                 requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
-            }
-        }
-
-        setContent {
-            FoodbackTheme {
-                HeartRateScreen()
             }
         }
     }

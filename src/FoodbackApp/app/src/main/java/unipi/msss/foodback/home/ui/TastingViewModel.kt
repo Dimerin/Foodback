@@ -25,7 +25,7 @@ import unipi.msss.foodback.commons.EventStateViewModel
 import unipi.msss.foodback.commons.ViewModelEvents
 import unipi.msss.foodback.home.data.TastingUseCase
 import unipi.msss.foodback.home.ui.TastingNavigationEvents.*
-import unipi.msss.foodback.services.HeartRateMessageListener
+import unipi.msss.foodback.services.WearableMessageListener
 import unipi.msss.foodback.services.Sender
 import unipi.msss.foodback.services.WearableData
 import java.io.File
@@ -44,14 +44,14 @@ class TastingViewModel @Inject constructor(
     override val _state: MutableStateFlow<TastingState> = MutableStateFlow(TastingState())
 
     private var healthCheckJob: Job? = null
-    private val heartRateMessageListener = HeartRateMessageListener()
+    private val wearableMessageListener = WearableMessageListener()
     private val buffer = mutableListOf<SensorData>()
     private var job: Job? = null
     private var serverManager: ServerManager? = null
 
     init {
         startHealthCheck()
-        Wearable.getMessageClient(context).addListener(heartRateMessageListener) //FIXME
+        Wearable.getMessageClient(context).addListener(wearableMessageListener) //FIXME
     }
 
     private fun startHealthCheck() {
@@ -345,7 +345,7 @@ class TastingViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             // Collect heart rate data
-            HeartRateMessageListener.heartRateFlow.collect { heartRates ->
+            WearableMessageListener.heartRateFlow.collect { heartRates ->
                 if (heartRates.isNotEmpty()) {
                     Log.d("HeartRateViewModel", "Received heart rate data: $heartRates")
                     writeWearableDataToCsv(context, "heart_rate_data.csv", experimentNumber,heartRates)
@@ -358,7 +358,7 @@ class TastingViewModel @Inject constructor(
 
         viewModelScope.launch {
             // Collect EDA data
-            HeartRateMessageListener.edaFlow.collect { edaValues ->
+            WearableMessageListener.edaFlow.collect { edaValues ->
                 if (edaValues.isNotEmpty()) {
                     Log.d("HeartRateViewModel", "Received EDA data: $edaValues")
                     writeWearableDataToCsv(context, "eda_data.csv", experimentNumber,edaValues)

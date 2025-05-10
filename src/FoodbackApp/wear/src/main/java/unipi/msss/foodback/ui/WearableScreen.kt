@@ -22,13 +22,13 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import unipi.msss.foodback.R
-import unipi.msss.foodback.viewmodel.HeartRateViewModel
+import unipi.msss.foodback.viewmodel.WearableViewModel
 
 
 //import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun HeartRateScreen(viewModel: HeartRateViewModel = viewModel()) {
+fun WearableScreen(viewModel: WearableViewModel = viewModel()) {
     //val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
     val hrComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.hr_animation))

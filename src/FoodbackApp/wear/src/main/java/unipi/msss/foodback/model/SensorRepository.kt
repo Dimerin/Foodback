@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Collections
 
-class HeartRateRepository(private val context: Context) {
+class SensorRepository(private val context: Context) {
 
     companion object {
         const val SENSOR_TYPE_EDA = 65554
-        const val TAG = "HeartRateRepository"
+        const val TAG = "SensorRepository"
     }
 
     private var sensorManager: SensorManager? = null
