@@ -50,6 +50,9 @@ class TastingViewModel @Inject constructor(
     private var actualNumberOfMeasurement: Int = 0
     private var job: Job? = null
     private var serverManager: ServerManager? = null
+    private val heartRateBuffer = mutableListOf<WearableData>()
+    private val edaBuffer = mutableListOf<WearableData>()
+
 
     init {
         startHealthCheck()
@@ -68,10 +71,7 @@ class TastingViewModel @Inject constructor(
                     _state.value = _state.value.copy(isWatchConnected = false)
 
                 }
-                // Only check when not actively recording
-                Log.d("TastingViewModel", "Checking device connection..., NicolaSecco")
                 if(isReceivingData) {
-                    Log.d("TastingViewModel", "Buffer is not empty, checking connection...")
                     _state.value = _state.value.copy(isEEGConnected = true)
                     isReceivingData = false
                 }
@@ -126,7 +126,7 @@ class TastingViewModel @Inject constructor(
             }
 
             is TastingEvent.DeleteEDACsv -> {
-                shareCsvFile(context,"eda_data.csv")
+                deleteCsvFile(context,"eda_data.csv")
             }
             is TastingEvent.DeleteHRCsv -> {
                 deleteCsvFile(context,"heart_rate_data.csv")
@@ -165,6 +165,7 @@ class TastingViewModel @Inject constructor(
     }
 
     private fun runProtocol() {
+        collectWearableData()
         job = viewModelScope.launch(ioDispatcher) {
             // First beep
             _state.value = _state.value.copy(stage = TastingStage.BringingToMouth)
@@ -229,8 +230,26 @@ class TastingViewModel @Inject constructor(
                 }
                 file.appendText(rows.joinToString("\n","\n"))
 
-                collectWearableData(experimentNumber)
-
+                if(heartRateBuffer.isNotEmpty()) {
+                    writeWearableDataToCsv(
+                        context,
+                        "heart_rate_data.csv",
+                        experimentNumber,
+                        subject,
+                        rating.toString(),
+                        heartRateBuffer
+                    )
+                }
+                if(edaBuffer.isNotEmpty()) {
+                    writeWearableDataToCsv(
+                        context,
+                        "eda_data.csv",
+                        experimentNumber,
+                        subject,
+                        rating.toString(),
+                        edaBuffer
+                    )
+                }
                 _state.value = _state.value.copy(stage = TastingStage.Done)
                 _state.value = _state.value.copy(sensorData = emptyList())
                 _state.value = _state.value.copy(rating = "")
@@ -323,49 +342,44 @@ class TastingViewModel @Inject constructor(
         }
     }
 
-    private fun collectWearableData(
-        experimentNumber: Int
-    ) {
+    private fun collectWearableData() {
         viewModelScope.launch {
-            // Collect heart rate data
             WearableMessageListener.heartRateFlow.collect { heartRates ->
                 if (heartRates.isNotEmpty()) {
                     Log.d("HeartRateViewModel", "Received heart rate data: $heartRates")
-                    writeWearableDataToCsv(context, "heart_rate_data.csv", experimentNumber,heartRates)
-                }
-                else{
-                    Log.d("HeartRateViewModel", "No heart rate data received")
+                    heartRateBuffer.clear()
+                    heartRateBuffer.addAll(heartRates)
                 }
             }
         }
 
         viewModelScope.launch {
-            // Collect EDA data
             WearableMessageListener.edaFlow.collect { edaValues ->
                 if (edaValues.isNotEmpty()) {
                     Log.d("HeartRateViewModel", "Received EDA data: $edaValues")
-                    writeWearableDataToCsv(context, "eda_data.csv", experimentNumber,edaValues)
-                }
-                else{
-                    Log.d("HeartRateViewModel", "No EDA data received")
+                    edaBuffer.clear()
+                    edaBuffer.addAll(edaValues)
                 }
             }
         }
     }
 
+
     fun writeWearableDataToCsv(
         context: Context,
         fileName: String,
         experimentNumber: Int,
+        subject: String,
+        rating: String,
         data: List<WearableData>
     ) {
         try {
             val file = File(context.getExternalFilesDir(null), fileName)
             if (!file.exists()) {
-                file.appendText("experiment,timestamp,value\n")
+                file.appendText("experiment,timestamp,value,subject,rating\n")
             }
             val rows = data.joinToString("\n") { entry ->
-                "${experimentNumber},${entry.timestamp},${entry.value}"
+                "${experimentNumber},${entry.timestamp},${entry.value},${subject},${rating}"
             }
             file.appendText("$rows\n")
             Log.d("CSVWriter", "Successfully wrote to ${file.absolutePath}")
