@@ -19,7 +19,8 @@ data class TastingState(
     val stage: TastingStage = TastingStage.Idle,
     val sensorData: List<SensorData> = emptyList(),
     val rating: String = "",
-    val isDeviceConnected: Boolean = false,
+    val isEEGConnected: Boolean = false,
+    val isWatchConnected: Boolean = false,
     val showLogoutDialog: Boolean = false
 ) : ViewState {
     val protocolRunning: Boolean

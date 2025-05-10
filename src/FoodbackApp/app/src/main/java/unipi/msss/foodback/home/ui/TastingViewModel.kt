@@ -16,8 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.tasks.await
 import mylibrary.mindrove.SensorData
 import mylibrary.mindrove.ServerManager
 import unipi.msss.foodback.R
@@ -46,11 +45,15 @@ class TastingViewModel @Inject constructor(
     private var healthCheckJob: Job? = null
     private val wearableMessageListener = WearableMessageListener()
     private val buffer = mutableListOf<SensorData>()
+    private var isReceivingData: Boolean = false
+    private var samplingFrequency : Int = 500
+    private var actualNumberOfMeasurement: Int = 0
     private var job: Job? = null
     private var serverManager: ServerManager? = null
 
     init {
         startHealthCheck()
+        startSession()
         Wearable.getMessageClient(context).addListener(wearableMessageListener) //FIXME
     }
 
@@ -59,47 +62,26 @@ class TastingViewModel @Inject constructor(
         healthCheckJob = viewModelScope.launch(ioDispatcher) {
             while (true) {
                 delay(2000L)
+                if(Wearable.getNodeClient(context).connectedNodes.await().isNotEmpty()) {
+                    _state.value = _state.value.copy(isWatchConnected = true)
+                } else {
+                    _state.value = _state.value.copy(isWatchConnected = false)
 
-                // Only check when not actively recording
-                if (_state.value.stage != TastingStage.Recording) {
-                    val isDeviceTransmitting = tryConnectToDevice()
-                    _state.value = _state.value.copy(isDeviceConnected = isDeviceTransmitting)
                 }
+                // Only check when not actively recording
+                Log.d("TastingViewModel", "Checking device connection..., NicolaSecco")
+                if(isReceivingData) {
+                    Log.d("TastingViewModel", "Buffer is not empty, checking connection...")
+                    _state.value = _state.value.copy(isEEGConnected = true)
+                    isReceivingData = false
+                }
+                else{
+                    _state.value = _state.value.copy(isEEGConnected = false)
+                }
+
             }
         }
     }
-
-    private suspend fun tryConnectToDevice(): Boolean = withTimeoutOrNull(1500L) { //FIXME
-        return@withTimeoutOrNull suspendCancellableCoroutine { cont ->
-            var isDataReceived = false
-            val tempManager = ServerManager { _ ->
-                isDataReceived = true
-                cont.resume(true) { _, _, _ -> }
-            }
-
-            try {
-                tempManager.start()
-
-                // Fallback: if no data comes within the timeout, return false
-                viewModelScope.launch {
-                    delay(1400L) // Short delay to allow data to arrive
-                    if (!isDataReceived && cont.isActive) {
-                        cont.resume(false) { _, _, _ -> }
-                    }
-                }
-
-                // Stop the temp manager once coroutine completes
-                cont.invokeOnCancellation {
-                    tempManager.stop()
-                }
-
-            } catch (_: Exception) {
-                tempManager.stop()
-                if (cont.isActive) cont.resume(false) { _, _, _ -> }
-            }
-        }
-    } == true
-
 
     companion object {
         private const val TIME_TO_GET_READY = 5_000L // ms
@@ -115,14 +97,13 @@ class TastingViewModel @Inject constructor(
             }
 
             is TastingEvent.StartProtocol -> {
-                if (!isNetworkAvailable(context) || !state.value.isDeviceConnected) {
+                if (!isNetworkAvailable(context) || !state.value.isEEGConnected) {
                     viewModelScope.launch {
                         sendEvent(Error("Turn on the wifi and connect to your Mindrove device to start the protocol."))
                     }
                     return
                 }
                 buffer.clear()
-                startSession()
                 runProtocol()
             }
 
@@ -173,7 +154,9 @@ class TastingViewModel @Inject constructor(
 
     private fun startSession() {
         serverManager = ServerManager { sensorData: SensorData ->
-            if (_state.value.stage == TastingStage.Recording) {
+            isReceivingData = sensorData.numberOfMeasurement.toInt() != 0
+            if (actualNumberOfMeasurement > 0) {
+                actualNumberOfMeasurement--
                 buffer += sensorData
                 _state.value = _state.value.copy(sensorData = buffer.toList())
             }
@@ -193,6 +176,8 @@ class TastingViewModel @Inject constructor(
 
             // Second beep
             _state.value = _state.value.copy(stage = TastingStage.Recording)
+            buffer.clear()
+            actualNumberOfMeasurement = (TIME_TO_TASTE/1000).toInt() * samplingFrequency
             startWearableSampling()
             MediaPlayer.create(context, R.raw.beep).apply {
                 setOnCompletionListener { release() }
@@ -206,8 +191,6 @@ class TastingViewModel @Inject constructor(
                 setOnCompletionListener { release() }
                 start()
             }
-
-            serverManager?.stop()
             _state.value = _state.value.copy(stage = TastingStage.AskingRating)
         }
     }
@@ -242,9 +225,9 @@ class TastingViewModel @Inject constructor(
                 }
 
                 if (!file.exists()) {
-                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating\n")
+                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating")
                 }
-                file.appendText(rows.joinToString("\n", "\n"))
+                file.appendText(rows.joinToString("\n","\n"))
 
                 collectWearableData(experimentNumber)
 

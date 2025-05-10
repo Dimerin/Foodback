@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -136,7 +137,7 @@ fun TastingScreen(
 
             Button(
                 onClick = { onEvent(TastingEvent.StartProtocol) },
-                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning && state.isDeviceConnected,
+                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning && state.isEEGConnected,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Start Protocol")
@@ -282,19 +283,31 @@ fun TastingScreen(
                     }
                 }
             }
-
             Spacer(Modifier.weight(1f))
             if (state.isFinished || state.isIdle) {
-                Text(
-                    text = if (state.isDeviceConnected) "Mindrove Connected" else "Mindrove Disconnected",
-                    fontSize = 18.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    color = if (state.isDeviceConnected) Color.Green else Color.Red
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                {
+                    Icon(
+                        painter = painterResource(id = if (state.isEEGConnected) R.drawable.eeg_connected else R.drawable.eeg_disconnected),
+                        contentDescription = "EEG Device Status",
+                        tint = if (state.isEEGConnected) Color.Green else Color.Red,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Icon(
+                        painter = painterResource(id = if (state.isWatchConnected) R.drawable.watch_connected else R.drawable.watch_disconnected),
+                        contentDescription = "EEG Device Status",
+                        tint = if (state.isWatchConnected) Color.Green else Color.Red,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+
                 Spacer(Modifier.height(24.dp))
             }
-            //FIXME
+            Spacer(Modifier.weight(1f))
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
