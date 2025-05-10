@@ -121,7 +121,7 @@ fun TastingScreen(
             )
 
             Spacer(Modifier.height(16.dp))
-            
+
             OutlinedTextField(
                 value = state.subject,
                 onValueChange = { onEvent(TastingEvent.SubjectChanged(it)) },
@@ -136,7 +136,7 @@ fun TastingScreen(
 
             Button(
                 onClick = { onEvent(TastingEvent.StartProtocol) },
-                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning && !state.isDeviceConnected,
+                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning && state.isDeviceConnected,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Start Protocol")
@@ -158,9 +158,15 @@ fun TastingScreen(
             if (state.showRatingInput) {
                 Spacer(Modifier.height(24.dp))
 
-                // Star rating system
-                var selectedRating by remember { mutableIntStateOf(state.rating.toIntOrNull() ?: 0) }
-                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                var selectedRating by remember {
+                    mutableIntStateOf(
+                        state.rating.toIntOrNull() ?: 0
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     for (i in 1..5) {
                         Icon(
                             imageVector = if (i <= selectedRating) Icons.Filled.Star else Icons.Outlined.Star,
@@ -216,7 +222,8 @@ fun TastingScreen(
                     val yStep = (maxY - minY) / 5
                     for (i in 0..5) {
                         val yValue = minY + i * yStep
-                        val yPosition = size.height - ((yValue - minY) / (maxY - minY) * size.height)
+                        val yPosition =
+                            size.height - ((yValue - minY) / (maxY - minY) * size.height)
                         drawIntoCanvas { canvas ->
                             canvas.nativeCanvas.drawText(
                                 "%.1f".format(yValue),
@@ -259,9 +266,11 @@ fun TastingScreen(
                     channels.forEachIndexed { index, channelData ->
                         for (i in 1 until channelData.size) {
                             val x1 = (i - 1) * step
-                            val y1 = size.height - ((channelData[i - 1] - minY) / (maxY - minY) * size.height)
+                            val y1 =
+                                size.height - ((channelData[i - 1] - minY) / (maxY - minY) * size.height)
                             val x2 = i * step
-                            val y2 = size.height - ((channelData[i] - minY) / (maxY - minY) * size.height)
+                            val y2 =
+                                size.height - ((channelData[i] - minY) / (maxY - minY) * size.height)
 
                             drawLine(
                                 color = colors[index],
@@ -275,17 +284,18 @@ fun TastingScreen(
             }
 
             Spacer(Modifier.weight(1f))
-          if (state.isFinished || state.isIdle ) {
-              Text(
-                  text = if (state.isDeviceConnected) "Mindrove Connected" else "Mindrove Disconnected",
-                  fontSize = 18.sp,
-                  modifier = Modifier.fillMaxWidth(),
-                  textAlign = TextAlign.Center,
-                  color = if (state.isDeviceConnected) Color.Green else Color.Red
-              )
-              Spacer(Modifier.height(24.dp))
-          }
-          Row(
+            if (state.isFinished || state.isIdle) {
+                Text(
+                    text = if (state.isDeviceConnected) "Mindrove Connected" else "Mindrove Disconnected",
+                    fontSize = 18.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = if (state.isDeviceConnected) Color.Green else Color.Red
+                )
+                Spacer(Modifier.height(24.dp))
+            }
+            //FIXME
+            Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -296,7 +306,7 @@ fun TastingScreen(
                     modifier = Modifier.weight(1f)
                 )
 
-                IconButton(onClick = { onEvent(TastingEvent.DeleteCsv) }) {
+                IconButton(onClick = { onEvent(TastingEvent.DeleteEEGCsv) }) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = "Delete CSV File",
@@ -304,7 +314,62 @@ fun TastingScreen(
                     )
                 }
 
-                IconButton(onClick = { onEvent(TastingEvent.ShareCsv) }) {
+                IconButton(onClick = { onEvent(TastingEvent.ShareEEGCsv) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = "Share CSV File",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "heart_rate_data.csv",
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = { onEvent(TastingEvent.DeleteHRCsv) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Delete CSV File",
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+
+                IconButton(onClick = { onEvent(TastingEvent.ShareHRCsv) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = "Share CSV File",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "eda_data.csv",
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = { onEvent(TastingEvent.DeleteEDACsv) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Delete CSV File",
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+
+                IconButton(onClick = { onEvent(TastingEvent.ShareEDACsv) }) {
                     Icon(
                         imageVector = Icons.Filled.Share,
                         contentDescription = "Share CSV File",

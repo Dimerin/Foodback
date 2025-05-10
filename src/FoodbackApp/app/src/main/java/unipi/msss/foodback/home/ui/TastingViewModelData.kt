@@ -5,7 +5,6 @@ import mylibrary.mindrove.SensorData
 import unipi.msss.foodback.commons.ViewEvent
 import unipi.msss.foodback.commons.ViewState
 
-
 enum class TastingStage {
     Idle,
     BringingToMouth,    // after 1st beep
@@ -58,11 +57,15 @@ sealed class TastingEvent : ViewEvent {
     data object StartProtocol : TastingEvent()
     data class RatingChanged(val value: String) : TastingEvent()
     data object SubmitRating : TastingEvent()
-    data object DeleteCsv : TastingEvent()
+    data object ShareEEGCsv : TastingEvent()
+    data object DeleteEEGCsv : TastingEvent()
+    data object ShareHRCsv : TastingEvent()
+    data object DeleteHRCsv : TastingEvent()
+    data object ShareEDACsv : TastingEvent()
+    data object DeleteEDACsv : TastingEvent()
     object ShowLogoutDialog : TastingEvent()
     object ConfirmLogout : TastingEvent()
     object DismissLogoutDialog : TastingEvent()
-    data object ShareCsv : TastingEvent()
 }
 
 sealed class TastingNavigationEvents {
