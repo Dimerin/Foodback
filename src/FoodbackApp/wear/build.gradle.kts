@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "unipi.msss.foodback"
-        minSdk = 30
+        minSdk = 31
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.wear.tooling.preview)
+    implementation(libs.constraintlayout)
 
     // Testing Dependencies
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -71,5 +72,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Animation (Lottie)
+    implementation ("com.airbnb.android:lottie:6.6.6")
     implementation("com.airbnb.android:lottie-compose:4.0.0")
+
+    implementation(libs.androidx.appcompat)
 }
