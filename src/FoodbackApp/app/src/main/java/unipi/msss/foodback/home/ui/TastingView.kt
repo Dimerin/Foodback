@@ -172,7 +172,7 @@ fun TastingScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    for (i in 1..5) {
+                    for (i in 0..4) {
                         Icon(
                             imageVector = if (i <= selectedRating) Icons.Filled.Star else Icons.Outlined.Star,
                             contentDescription = "Star $i",
@@ -193,7 +193,7 @@ fun TastingScreen(
                 Spacer(Modifier.height(24.dp))
                 Button(
                     onClick = { onEvent(TastingEvent.SubmitRating) },
-                    enabled = selectedRating in 1..5,
+                    enabled = selectedRating in 0..4,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Submit Rating")
