@@ -6,12 +6,14 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
+import androidx.lifecycle.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicBoolean
 
 class SensorRepository(private val context: Context) {
 
@@ -36,8 +38,7 @@ class SensorRepository(private val context: Context) {
     private val _latestEDA = MutableStateFlow<Float?>(null)
     val latestEDA: StateFlow<Float?> = _latestEDA
 
-    @Volatile
-    private var _isCollecting: Boolean = false
+    private var _isCollectingPrv = AtomicBoolean(false)
 
     private val sensorScope = CoroutineScope(Dispatchers.IO)
 
@@ -57,14 +58,20 @@ class SensorRepository(private val context: Context) {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
                             val heartRate = it.values[0]
-                            if (_isCollecting) _collectedHeartRates.add(
-                                Pair(System.currentTimeMillis(), heartRate))
+                            Log.d("SensorHR", "Campiono Fuori ${_isCollectingPrv.get()}")
+                            if (_isCollectingPrv.get()) {
+                                Log.d("SensorHR", "Campiono dentro  ${_isCollectingPrv.get()}")
+                                _collectedHeartRates.add(
+                                    Pair(System.currentTimeMillis(), heartRate))
+                            }
                             _latestHeartRate.value = heartRate
                         }
                         SENSOR_TYPE_EDA -> {
                             val edaValue = it.values[0]
-                            if (_isCollecting) _collectedEDA.add(
-                                Pair(System.currentTimeMillis(), edaValue))
+                            if (_isCollectingPrv.get()){
+                                _collectedEDA.add(
+                                    Pair(System.currentTimeMillis(), edaValue))
+                            }
                             _latestEDA.value = edaValue
                         }
                     }
@@ -99,11 +106,11 @@ class SensorRepository(private val context: Context) {
     }
 
     fun startCollecting() {
-        _isCollecting = true
+        _isCollectingPrv.set(true)
     }
 
     fun stopCollecting() {
-        _isCollecting = false
+        _isCollectingPrv.set(false)
     }
 
     fun clearData() {

@@ -38,9 +38,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        samplingMessageListener = SamplingMessageListener(applicationContext)
-        Wearable.getMessageClient(this).addListener(samplingMessageListener!!)
-
         when {
             ContextCompat.checkSelfPermission(
                 this, Manifest.permission.BODY_SENSORS

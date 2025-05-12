@@ -9,7 +9,7 @@ fun createNotificationChannel(context: Context) {
     val channel = NotificationChannel(
         "sampling_channel",
         "Sensors sampling",
-        NotificationManager.IMPORTANCE_LOW
+        NotificationManager.IMPORTANCE_DEFAULT
     )
     val manager = context.getSystemService(NotificationManager::class.java)
     manager.createNotificationChannel(channel)

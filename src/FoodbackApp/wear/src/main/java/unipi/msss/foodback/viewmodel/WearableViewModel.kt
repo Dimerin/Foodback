@@ -30,6 +30,7 @@ class WearableViewModel(context : Context) : ViewModel() {
     val uiState: StateFlow<WearableUiState> = _uiState
 
     init {
+        Log.d("Model", "Call")
         sensorRepository.start()
 
         sensorRepository.latestHeartRate
@@ -50,12 +51,6 @@ class WearableViewModel(context : Context) : ViewModel() {
         }
         sensorRepository.startCollecting()
         _uiState.value = _uiState.value.copy(isCollecting = true)
-
-        viewModelScope.launch {
-            delay(10000)
-            stopCollection()
-            saveData(context)
-        }
     }
 
     fun stopCollection() {
