@@ -6,7 +6,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
-import androidx.lifecycle.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,14 +14,23 @@ import kotlinx.coroutines.launch
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SensorRepository(private val context: Context) {
+class SensorRepository private constructor(context: Context) {
 
     companion object {
         const val SENSOR_TYPE_EDA = 65554
         const val TAG = "SensorRepository"
+
+        @Volatile
+        private var INSTANCE: SensorRepository? = null
+
+        fun getInstance(context: Context): SensorRepository {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: SensorRepository(context.applicationContext).also { INSTANCE = it }
+            }
+        }
     }
 
-    private var sensorManager: SensorManager? = null
+    private var sensorManager: SensorManager? = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private var heartRateSensor: Sensor? = null
     private var edaSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
@@ -43,7 +51,6 @@ class SensorRepository(private val context: Context) {
     private val sensorScope = CoroutineScope(Dispatchers.IO)
 
     fun start() {
-        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         edaSensor = sensorManager?.getDefaultSensor(SENSOR_TYPE_EDA)
 
@@ -58,9 +65,9 @@ class SensorRepository(private val context: Context) {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
                             val heartRate = it.values[0]
-                            Log.d("SensorHR", "Campiono Fuori ${_isCollectingPrv.get()}")
+                            Log.d("Hr","[${_isCollectingPrv.get()}] Fuori")
                             if (_isCollectingPrv.get()) {
-                                Log.d("SensorHR", "Campiono dentro  ${_isCollectingPrv.get()}")
+                                Log.d("Hr","[${_isCollectingPrv.get()}] Dentro")
                                 _collectedHeartRates.add(
                                     Pair(System.currentTimeMillis(), heartRate))
                             }
@@ -82,7 +89,7 @@ class SensorRepository(private val context: Context) {
         }
 
         sensorScope.launch {
-            // Lancia un task su un thread secondario
+            // Launch a task on a secondary thread
             sensorManager?.registerListener(
                 sensorListener,
                 heartRateSensor,

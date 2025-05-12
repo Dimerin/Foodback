@@ -2,30 +2,28 @@ package unipi.msss.foodback.services
 
 import android.app.Service
 import android.content.Intent
-import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
 import unipi.msss.foodback.R
-import unipi.msss.foodback.model.SensorRepository
 import unipi.msss.foodback.util.createNotificationChannel
 import unipi.msss.foodback.viewmodel.WearableViewModel
 
 class SamplingService : Service() {
 
-    //private lateinit var viewModel: WearableViewModel
+    private lateinit var viewModel: WearableViewModel
     private var serviceJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel(applicationContext)
-        //viewModel = WearableViewModel(applicationContext)
+        viewModel = WearableViewModel(applicationContext)
     }
 
     private fun showNotification() {
         val notification = NotificationCompat.Builder(this, "sampling_channel")
-            .setContentTitle("Campionamento in corso")
-            .setContentText("Sto raccogliendo i dati dai sensori...")
+            .setContentTitle("Sampling in progress")
+            .setContentText("I'm collecting data from the sensors...")
             .setSmallIcon(R.drawable.notify_icon)
             .build()
 
