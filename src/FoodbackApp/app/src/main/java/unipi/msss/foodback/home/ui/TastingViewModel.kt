@@ -210,9 +210,9 @@ class TastingViewModel @Inject constructor(
                 val file = File(context.getExternalFilesDir(null),"eeg_tasting_data.csv")
                 val (sampleNumber, experimentNumber) = getExperimentMetaData(file)
 
-                val rows = buffer.map { sd ->
+                val rows = buffer.mapIndexed { index, sd ->
                     listOf(
-                        sampleNumber.toString(),
+                        (sampleNumber + index).toString(),
                         sd.channel1.toString(),
                         sd.channel2.toString(),
                         sd.channel3.toString(),
@@ -269,7 +269,7 @@ class TastingViewModel @Inject constructor(
 
         val lastLine = file.readLines().lastOrNull()
 
-        val sampleNumber = lastLine?.split(",")?.getOrNull(0)?.toIntOrNull() ?: 0
+        val sampleNumber = lastLine?.split(",")?.getOrNull(0)?.toIntOrNull()?.plus(1) ?: 0
         val experimentNumber = lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
 
         return (sampleNumber to experimentNumber)
