@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        samplingMessageListener = SamplingMessageListener(applicationContext, wearableViewModel)
+        samplingMessageListener = SamplingMessageListener(applicationContext)
         Wearable.getMessageClient(this).addListener(samplingMessageListener!!)
 
         when {
