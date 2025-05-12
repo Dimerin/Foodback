@@ -1,17 +1,14 @@
 package unipi.msss.foodback.services
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
-import unipi.msss.foodback.viewmodel.WearableViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class SamplingMessageListener (
-    private val context: Context,
-    private val viewModel: WearableViewModel
+    private val context: Context
 ) : MessageClient.OnMessageReceivedListener {
 
     companion object {
@@ -20,13 +17,10 @@ class SamplingMessageListener (
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "$messageEvent")
         if (messageEvent.path == PATH) {
-            val message = String(messageEvent.data)
-            Log.d(TAG, "Receive sampling message: $message")
-            CoroutineScope(Dispatchers.Main).launch {
-                viewModel.startCollection(context)
-            }
+            Log.d(TAG, "Message Received: ${String(messageEvent.data)}")
+            val intent = Intent(context, SamplingService::class.java)
+            ContextCompat.startForegroundService(context, intent)
         }
     }
 }

@@ -8,8 +8,6 @@ import androidx.lifecycle.ViewModel
 import unipi.msss.foodback.model.DataSender
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import unipi.msss.foodback.model.SensorRepository
 
 data class WearableUiState(
@@ -24,8 +22,7 @@ class WearableViewModel(context : Context) : ViewModel() {
         const val TAG = "WearableViewModel"
     }
 
-    private val sensorRepository =
-        SensorRepository(context.applicationContext)
+    private val sensorRepository = SensorRepository.getInstance(context.applicationContext)
     private val _uiState = MutableStateFlow(WearableUiState())
     val uiState: StateFlow<WearableUiState> = _uiState
 
@@ -50,12 +47,6 @@ class WearableViewModel(context : Context) : ViewModel() {
         }
         sensorRepository.startCollecting()
         _uiState.value = _uiState.value.copy(isCollecting = true)
-
-        viewModelScope.launch {
-            delay(10000)
-            stopCollection()
-            saveData(context)
-        }
     }
 
     fun stopCollection() {

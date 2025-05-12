@@ -12,15 +12,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicBoolean
 
-class SensorRepository(private val context: Context) {
+class SensorRepository private constructor(context: Context) {
 
     companion object {
         const val SENSOR_TYPE_EDA = 65554
         const val TAG = "SensorRepository"
+
+        @Volatile
+        private var INSTANCE: SensorRepository? = null
+
+        fun getInstance(context: Context): SensorRepository {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: SensorRepository(context.applicationContext).also { INSTANCE = it }
+            }
+        }
     }
 
-    private var sensorManager: SensorManager? = null
+    private var sensorManager: SensorManager? = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private var heartRateSensor: Sensor? = null
     private var edaSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
@@ -36,13 +46,11 @@ class SensorRepository(private val context: Context) {
     private val _latestEDA = MutableStateFlow<Float?>(null)
     val latestEDA: StateFlow<Float?> = _latestEDA
 
-    @Volatile
-    private var _isCollecting: Boolean = false
+    private var _isCollectingPrv = AtomicBoolean(false)
 
     private val sensorScope = CoroutineScope(Dispatchers.IO)
 
     fun start() {
-        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         edaSensor = sensorManager?.getDefaultSensor(SENSOR_TYPE_EDA)
 
@@ -57,14 +65,20 @@ class SensorRepository(private val context: Context) {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
                             val heartRate = it.values[0]
-                            if (_isCollecting) _collectedHeartRates.add(
-                                Pair(System.currentTimeMillis(), heartRate))
+                            Log.d("Hr","[${_isCollectingPrv.get()}] Fuori")
+                            if (_isCollectingPrv.get()) {
+                                Log.d("Hr","[${_isCollectingPrv.get()}] Dentro")
+                                _collectedHeartRates.add(
+                                    Pair(System.currentTimeMillis(), heartRate))
+                            }
                             _latestHeartRate.value = heartRate
                         }
                         SENSOR_TYPE_EDA -> {
                             val edaValue = it.values[0]
-                            if (_isCollecting) _collectedEDA.add(
-                                Pair(System.currentTimeMillis(), edaValue))
+                            if (_isCollectingPrv.get()){
+                                _collectedEDA.add(
+                                    Pair(System.currentTimeMillis(), edaValue))
+                            }
                             _latestEDA.value = edaValue
                         }
                     }
@@ -75,7 +89,7 @@ class SensorRepository(private val context: Context) {
         }
 
         sensorScope.launch {
-            // Lancia un task su un thread secondario
+            // Launch a task on a secondary thread
             sensorManager?.registerListener(
                 sensorListener,
                 heartRateSensor,
@@ -99,11 +113,11 @@ class SensorRepository(private val context: Context) {
     }
 
     fun startCollecting() {
-        _isCollecting = true
+        _isCollectingPrv.set(true)
     }
 
     fun stopCollecting() {
-        _isCollecting = false
+        _isCollectingPrv.set(false)
     }
 
     fun clearData() {
