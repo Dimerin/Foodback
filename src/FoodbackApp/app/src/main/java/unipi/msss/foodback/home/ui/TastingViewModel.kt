@@ -208,11 +208,11 @@ class TastingViewModel @Inject constructor(
                 }
 
                 val file = File(context.getExternalFilesDir(null),"eeg_tasting_data.csv")
-                val experimentNumber = getExperimentNumber(file)
+                val (sampleNumber, experimentNumber) = getExperimentMetaData(file)
 
                 val rows = buffer.map { sd ->
                     listOf(
-                        sd.numberOfMeasurement.toString(),
+                        sampleNumber.toString(),
                         sd.channel1.toString(),
                         sd.channel2.toString(),
                         sd.channel3.toString(),
@@ -226,7 +226,7 @@ class TastingViewModel @Inject constructor(
                 }
 
                 if (!file.exists()) {
-                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating")
+                    file.appendText("sample,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating")
                 }
                 file.appendText(rows.joinToString("\n","\n"))
 
@@ -262,13 +262,17 @@ class TastingViewModel @Inject constructor(
         }
     }
 
-    private fun getExperimentNumber(file: File): Int {
+    private fun getExperimentMetaData(file: File): Pair<Int, Int> {
         if (!file.exists() || file.readText().isBlank()) {
-            return 1
+            return (0 to 1)
         }
 
         val lastLine = file.readLines().lastOrNull()
-        return lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
+
+        val sampleNumber = lastLine?.split(",")?.getOrNull(0)?.toIntOrNull() ?: 0
+        val experimentNumber = lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
+
+        return (sampleNumber to experimentNumber)
     }
 
     private fun deleteCsvFile(context: Context, fileName: String) {
