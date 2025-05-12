@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +54,7 @@ fun TastingView(
         when (event) {
             is TastingNavigationEvents.Finished -> onFinished()
             is TastingNavigationEvents.Error -> Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
-            
+
             is TastingNavigationEvents.ShareCsvFile -> {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/csv"
@@ -362,6 +363,11 @@ fun TastingScreen(
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
 
                         // Sheet content
                         Row(
@@ -446,6 +452,40 @@ fun TastingScreen(
                                 )
                             }
                         }
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "Settings",
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Preview Mode",
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(1f)
+
+                            )
+
+                            Checkbox(
+                                checked = state.previewMode,
+                                onCheckedChange = { onEvent(TastingEvent.PreviewCheckboxClicked(it)) },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.primary,
+                                    uncheckedColor = MaterialTheme.colorScheme.secondary
+                                ),
+                            )
+                        }
+                        Spacer(Modifier.height(48.dp))
                         Button(
                             onClick = {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -464,7 +504,7 @@ fun TastingScreen(
     }
 
 
-    
+
     // Show logout confirmation dialog
     if (state.showLogoutDialog) {
         AlertDialog(
