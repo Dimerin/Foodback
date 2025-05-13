@@ -8,8 +8,6 @@ import androidx.lifecycle.ViewModel
 import unipi.msss.foodback.model.DataSender
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import unipi.msss.foodback.model.SensorRepository
 
 data class WearableUiState(
@@ -24,13 +22,13 @@ class WearableViewModel(context : Context) : ViewModel() {
         const val TAG = "WearableViewModel"
     }
 
-    private val sensorRepository =
-        SensorRepository(context.applicationContext)
+    private val sensorRepository = SensorRepository.getInstance(context.applicationContext)
     private val _uiState = MutableStateFlow(WearableUiState())
     val uiState: StateFlow<WearableUiState> = _uiState
 
     init {
-        sensorRepository.start()
+        Log.d(TAG,"ENTRO In init")
+        //sensorRepository.start()
 
         sensorRepository.latestHeartRate
             .onEach { latestHeartRate ->
@@ -50,12 +48,6 @@ class WearableViewModel(context : Context) : ViewModel() {
         }
         sensorRepository.startCollecting()
         _uiState.value = _uiState.value.copy(isCollecting = true)
-
-        viewModelScope.launch {
-            delay(10000)
-            stopCollection()
-            saveData(context)
-        }
     }
 
     fun stopCollection() {
@@ -65,10 +57,26 @@ class WearableViewModel(context : Context) : ViewModel() {
 
     fun saveData(context: Context) {
         try {
-            val collectedHeartRates = sensorRepository.collectedHeartRates
-            val collectedEDA = sensorRepository.collectedEDA
-            val dataToSave =
-            DataSender.sendSensorData(context, collectedHeartRates, collectedEDA)
+            var collectedHeartRates = sensorRepository.collectedHeartRates
+            var collectedEDA = sensorRepository.collectedEDA
+
+            if (collectedEDA.isEmpty()) {
+                val latestEda = _uiState.value.latestEda ?: 0f
+                collectedEDA = collectedEDA.toMutableList().apply {
+                    add(Pair(System.currentTimeMillis(), latestEda))
+                }
+            }
+
+            if (collectedHeartRates.isEmpty()) {
+                val latestHr = _uiState.value.latestHeartRate ?: 0f
+                collectedHeartRates = collectedHeartRates.toMutableList().apply {
+                    add(Pair(System.currentTimeMillis(), latestHr))
+                }
+            }
+
+            val dataToSave = DataSender
+                .sendSensorData(context, collectedHeartRates, collectedEDA)
+
             Log.d(TAG, "Saved Data: $dataToSave")
             sensorRepository.clearData()
         } catch (e: Exception) {
@@ -79,6 +87,5 @@ class WearableViewModel(context : Context) : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        sensorRepository.stop()
     }
 }

@@ -1,32 +1,31 @@
 package unipi.msss.foodback.services
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
-import unipi.msss.foodback.viewmodel.WearableViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import unipi.msss.foodback.model.DataSender
 
 class SamplingMessageListener (
-    private val context: Context,
-    private val viewModel: WearableViewModel
+    private val context: Context
 ) : MessageClient.OnMessageReceivedListener {
 
     companion object {
         const val TAG = "SamplingMessageListener"
-        const val PATH = "/start_sampling"
+        const val PATH_START = "/start_sampling"
+        const val PATH_HEALTH = "/check_health"
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "$messageEvent")
-        if (messageEvent.path == PATH) {
-            val message = String(messageEvent.data)
-            Log.d(TAG, "Receive sampling message: $message")
-            CoroutineScope(Dispatchers.Main).launch {
-                viewModel.startCollection(context)
-            }
+        if (messageEvent.path == PATH_START) {
+            Log.d(TAG, "Start sampling: ${String(messageEvent.data)}")
+            val intent = Intent(context, SamplingService::class.java)
+            ContextCompat.startForegroundService(context, intent)
+        }else if( messageEvent.path == PATH_HEALTH) {
+            Log.d(TAG, "Checking health: ${String(messageEvent.data)}")
+            DataSender.sendHealtStatus(context)
         }
     }
 }

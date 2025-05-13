@@ -4,32 +4,38 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import kotlinx.coroutines.*
+import androidx.core.app.NotificationCompat
+import unipi.msss.foodback.R
 import unipi.msss.foodback.model.SensorRepository
+import unipi.msss.foodback.util.createNotificationChannel
 
 class SensorService : Service() {
+    companion object {
+        const val TAG : String = "SensorService"
+    }
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val heartRateSensor =
-        SensorRepository(this@SensorService)
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel(applicationContext, "sensor_channel")
+        Log.d(TAG, "Service started")
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d("SensorService", "Starting heart rate sampling...")
+        val repo = SensorRepository.getInstance(applicationContext)
+        repo.start()
 
-        serviceScope.launch {
-            Log.d("SensorService", "Start collecting data")
-            heartRateSensor.start()
-        }
+        val notification = NotificationCompat.Builder(this, "sensor_channel")
+            .setContentTitle("Starting measurements")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .build()
 
-        return START_NOT_STICKY
+        startForeground(1, notification)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         super.onDestroy()
-        heartRateSensor.stop()
-        serviceScope.cancel()
+        Log.d(TAG, "Service terminated")
+        val repo = SensorRepository.getInstance(applicationContext)
+        repo.stop()
     }
 }
-
