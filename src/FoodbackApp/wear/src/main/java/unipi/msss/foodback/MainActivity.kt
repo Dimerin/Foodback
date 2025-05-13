@@ -9,8 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
-import com.google.android.gms.wearable.Wearable
-import unipi.msss.foodback.services.SamplingMessageListener
 import unipi.msss.foodback.ui.WearableScreen
 import unipi.msss.foodback.ui.theme.FoodbackTheme
 import unipi.msss.foodback.viewmodel.WearableViewModel
@@ -34,7 +32,6 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
             }
         }
-    private var samplingMessageListener: SamplingMessageListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,5 +49,9 @@ class MainActivity : ComponentActivity() {
                 requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
     }
 }

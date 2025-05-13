@@ -16,7 +16,7 @@ class SamplingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel(applicationContext)
+        createNotificationChannel(applicationContext,"sampling_channel")
         viewModel = WearableViewModel(applicationContext)
     }
 

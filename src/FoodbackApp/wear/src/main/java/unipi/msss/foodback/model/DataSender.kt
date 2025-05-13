@@ -23,6 +23,40 @@ object DataSender {
         return jsonArray
     }
 
+    fun sendHealtStatus(context: Context) {
+        val client = Wearable.getMessageClient(context)
+
+        val json = JSONObject().apply {
+            put("health_status", true)
+        }
+        val message = json.toString()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                if (nodes.isEmpty()) {
+                    Log.w("DataSender", "No connected nodes.")
+                } else {
+                    for (node in nodes) {
+                        try {
+                            val result = client.sendMessage(
+                                node.id,
+                                "/check_health",
+                                message.toByteArray()
+                            ).await()
+                            Log.d("DataSender", "Sent to ${node.displayName}: $message (Result: $result)")
+                        } catch (e: Exception) {
+                            Log.e("DataSender", "Failed to send to ${node.displayName}: ${e.message}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("DataSender", "Failed to get nodes: ${e.message}", e)
+            }
+        }
+
+    }
+
     fun sendSensorData(context: Context, heartRates: List<Pair<Long, Float>>, edaValues: List<Pair<Long, Float>>) {
         val client = Wearable.getMessageClient(context)
 

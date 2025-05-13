@@ -64,10 +64,9 @@ class SensorRepository private constructor(context: Context) {
                 event?.let {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
+                            Log.d("HR","[${_isCollectingPrv.get()}]")
                             val heartRate = it.values[0]
-                            Log.d("Hr","[${_isCollectingPrv.get()}] Fuori")
                             if (_isCollectingPrv.get()) {
-                                Log.d("Hr","[${_isCollectingPrv.get()}] Dentro")
                                 _collectedHeartRates.add(
                                     Pair(System.currentTimeMillis(), heartRate))
                             }
