@@ -6,18 +6,23 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
 import unipi.msss.foodback.R
+import unipi.msss.foodback.model.SensorRepository
 import unipi.msss.foodback.util.createNotificationChannel
 import unipi.msss.foodback.viewmodel.WearableViewModel
 
 class SamplingService : Service() {
 
-    private lateinit var viewModel: WearableViewModel
+    //private lateinit var viewModel: WearableViewModel
+    //private lateinit var sensorService : SensorService
     private var serviceJob: Job? = null
+
+    private lateinit var sensorRepository :SensorRepository
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel(applicationContext,"sampling_channel")
-        viewModel = WearableViewModel(applicationContext)
+        sensorRepository = SensorRepository.getInstance(applicationContext)
+        //viewModel = WearableViewModel(applicationContext)
     }
 
     private fun showNotification() {
@@ -32,11 +37,14 @@ class SamplingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         showNotification()
-        viewModel.startCollection(applicationContext)
+        //viewModel.startCollection(applicationContext)
+        sensorRepository.startCollecting()
         serviceJob = CoroutineScope(Dispatchers.Default).launch {
             delay(10000)  // wait for 10 seconds
-            viewModel.stopCollection()
-            viewModel.saveData(applicationContext)
+            //viewModel.stopCollection()
+            sensorRepository.stopCollecting()
+            //viewModel.saveData(applicationContext)
+            sensorRepository.saveData(applicationContext)
             stopSelf()    // Stop the service
         }
         return START_NOT_STICKY
