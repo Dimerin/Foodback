@@ -13,14 +13,15 @@ import unipi.msss.foodback.viewmodel.WearableViewModel
 class SamplingService : Service() {
 
     //private lateinit var viewModel: WearableViewModel
-    private lateinit var sensorService : SensorService
+    //private lateinit var sensorService : SensorService
     private var serviceJob: Job? = null
 
-    private val sensorRepository = SensorRepository.getInstance(applicationContext)
+    private lateinit var sensorRepository :SensorRepository
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel(applicationContext,"sampling_channel")
+        sensorRepository = SensorRepository.getInstance(applicationContext)
         //viewModel = WearableViewModel(applicationContext)
     }
 
