@@ -40,6 +40,11 @@ class WearableViewModel(context : Context) : ViewModel() {
                 _uiState.value = _uiState.value.copy(latestEda = latestEda)
             }
             .launchIn(viewModelScope)
+        sensorRepository.setRedCircle
+            .onEach { setRedCircle ->
+                _uiState.value = _uiState.value.copy(isCollecting = setRedCircle)
+            }
+            .launchIn(viewModelScope)
     }
 
     fun startCollection(context: Context) {
