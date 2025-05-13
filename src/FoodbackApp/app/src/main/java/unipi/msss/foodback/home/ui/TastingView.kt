@@ -166,7 +166,7 @@ fun TastingScreen(
 
                 var selectedRating by remember {
                     mutableIntStateOf(
-                        state.rating.toIntOrNull() ?: 0
+                        state.rating.toIntOrNull() ?: -1
                     )
                 }
                 Row(
@@ -182,7 +182,7 @@ fun TastingScreen(
                                 .size(40.dp)
                                 .clickable(
                                     indication = null, // Disable ripple effect
-                                    interactionSource = remember { MutableInteractionSource() } // Prevent interaction tracking
+                                    interactionSource = remember { MutableInteractionSource() }
                                 ) {
                                     selectedRating = i
                                     onEvent(TastingEvent.RatingChanged(i.toString()))
