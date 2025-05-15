@@ -18,7 +18,5 @@ class FoodbackApp : Application() {
         val listener = SamplingMessageListener(applicationContext)
         Wearable.getMessageClient(this).addListener(listener)
         Log.d(TAG, "Application starting")
-        val serviceIntent = Intent(this, SensorService::class.java)
-        startForegroundService(serviceIntent)
     }
 }

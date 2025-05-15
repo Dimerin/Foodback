@@ -12,6 +12,7 @@ import unipi.msss.foodback.util.createNotificationChannel
 class SensorService : Service() {
     companion object {
         const val TAG : String = "SensorService"
+        var isRunning = false
     }
 
     override fun onCreate() {
@@ -20,6 +21,7 @@ class SensorService : Service() {
         Log.d(TAG, "Service started")
 
         val repo = SensorRepository.getInstance(applicationContext)
+        isRunning = true
         repo.start()
 
         val notification = NotificationCompat.Builder(this, "sensor_channel")
@@ -37,5 +39,6 @@ class SensorService : Service() {
         Log.d(TAG, "Service terminated")
         val repo = SensorRepository.getInstance(applicationContext)
         repo.stop()
+        isRunning = false
     }
 }
