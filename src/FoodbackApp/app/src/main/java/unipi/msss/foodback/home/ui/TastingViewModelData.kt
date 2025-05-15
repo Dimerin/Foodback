@@ -19,6 +19,7 @@ data class TastingState(
     val stage: TastingStage = TastingStage.Idle,
     val sensorData: List<SensorData> = emptyList(),
     val rating: String = "",
+    val previewMode: Boolean = false,
     val isEEGConnected: Boolean = false,
     val isWatchConnected: Boolean = false,
     val showLogoutDialog: Boolean = false
@@ -64,6 +65,7 @@ sealed class TastingEvent : ViewEvent {
     data object DeleteHRCsv : TastingEvent()
     data object ShareEDACsv : TastingEvent()
     data object DeleteEDACsv : TastingEvent()
+    data class PreviewCheckboxClicked(val value: Boolean) : TastingEvent()
     object ShowLogoutDialog : TastingEvent()
     object ConfirmLogout : TastingEvent()
     object DismissLogoutDialog : TastingEvent()

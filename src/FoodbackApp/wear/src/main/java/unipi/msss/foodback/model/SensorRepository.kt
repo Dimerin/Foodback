@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import unipi.msss.foodback.viewmodel.WearableViewModel
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -30,11 +31,13 @@ class SensorRepository private constructor(context: Context) {
         }
     }
 
-    private var sensorManager: SensorManager? = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private var sensorManager: SensorManager? =
+        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private var heartRateSensor: Sensor? = null
     private var edaSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
-    private val _collectedHeartRates = Collections.synchronizedList(mutableListOf<Pair<Long, Float>>())
+    private val _collectedHeartRates =
+        Collections.synchronizedList(mutableListOf<Pair<Long, Float>>())
     val collectedHeartRates: List<Pair<Long, Float>> get() = _collectedHeartRates
 
     private val _collectedEDA = Collections.synchronizedList(mutableListOf<Pair<Long, Float>>())
@@ -47,6 +50,9 @@ class SensorRepository private constructor(context: Context) {
     val latestEDA: StateFlow<Float?> = _latestEDA
 
     private var _isCollectingPrv = AtomicBoolean(false)
+
+    private var _setRedCircle = MutableStateFlow<Boolean>(false)
+    var setRedCircle: StateFlow<Boolean> = _setRedCircle
 
     private val sensorScope = CoroutineScope(Dispatchers.IO)
 
@@ -64,20 +70,22 @@ class SensorRepository private constructor(context: Context) {
                 event?.let {
                     when (it.sensor.type) {
                         Sensor.TYPE_HEART_RATE -> {
+                            Log.d("HR", "[${_isCollectingPrv.get()}]")
                             val heartRate = it.values[0]
-                            Log.d("Hr","[${_isCollectingPrv.get()}] Fuori")
                             if (_isCollectingPrv.get()) {
-                                Log.d("Hr","[${_isCollectingPrv.get()}] Dentro")
                                 _collectedHeartRates.add(
-                                    Pair(System.currentTimeMillis(), heartRate))
+                                    Pair(System.currentTimeMillis(), heartRate)
+                                )
                             }
                             _latestHeartRate.value = heartRate
                         }
+
                         SENSOR_TYPE_EDA -> {
                             val edaValue = it.values[0]
-                            if (_isCollectingPrv.get()){
+                            if (_isCollectingPrv.get()) {
                                 _collectedEDA.add(
-                                    Pair(System.currentTimeMillis(), edaValue))
+                                    Pair(System.currentTimeMillis(), edaValue)
+                                )
                             }
                             _latestEDA.value = edaValue
                         }
@@ -114,10 +122,12 @@ class SensorRepository private constructor(context: Context) {
 
     fun startCollecting() {
         _isCollectingPrv.set(true)
+        _setRedCircle.value = true
     }
 
     fun stopCollecting() {
         _isCollectingPrv.set(false)
+        _setRedCircle.value = false
     }
 
     fun clearData() {
@@ -126,5 +136,43 @@ class SensorRepository private constructor(context: Context) {
         _latestHeartRate.value = null
         _latestEDA.value = null
     }
+
+    fun saveData(context: Context) {
+        try {
+            // Crea copie sicure dei dati
+            var collectedHeartRates = _collectedHeartRates.toList()
+            var collectedEDA = _collectedEDA.toList()
+
+            // Aggiungi l'ultimo valore di EDA se non ci sono dati
+            if (collectedEDA.isEmpty()) {
+                val latestEda = _latestEDA.value ?: 0f // Assicurati che ci sia un valore di fallback
+                collectedEDA = collectedEDA.toMutableList().apply {
+                    add(Pair(System.currentTimeMillis(), latestEda))
+                }
+            }
+
+            // Aggiungi l'ultimo valore di HeartRate se non ci sono dati
+            if (collectedHeartRates.isEmpty()) {
+                val latestHr = _latestHeartRate.value ?: 0f // Assicurati che ci sia un valore di fallback
+                collectedHeartRates = collectedHeartRates.toMutableList().apply {
+                    add(Pair(System.currentTimeMillis(), latestHr))
+                }
+            }
+
+            // Invia i dati ai destinatari (esempio, a un server o a un database)
+            val dataToSave = DataSender.sendSensorData(context, collectedHeartRates, collectedEDA)
+
+            // Log del dato salvato
+            Log.d(TAG, "Saved Data: $dataToSave")
+
+            // Pulisce i dati raccolti
+            clearData()
+        } catch (e: Exception) {
+            // Gestisci gli errori e aggiorna lo stato con il messaggio di errore
+            Log.e(TAG, "Error while saving data", e)
+            // Opzionale: usa un altro flusso di stato per gestire gli errori nella UI
+        }
+    }
+
 }
 

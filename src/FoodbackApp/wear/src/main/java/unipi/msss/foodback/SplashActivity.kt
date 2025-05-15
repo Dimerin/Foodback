@@ -1,12 +1,13 @@
 package unipi.msss.foodback
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.ComponentActivity
-//import androidx.appcompat.app.AppCompatActivity
 
+@SuppressLint("CustomSplashScreen")
 class SplashActivity : ComponentActivity() {
 
     private val handler = Handler(Looper.getMainLooper())

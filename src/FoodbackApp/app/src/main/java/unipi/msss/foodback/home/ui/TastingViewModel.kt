@@ -118,24 +118,27 @@ class TastingViewModel @Inject constructor(
             }
 
             is TastingEvent.DeleteEEGCsv -> {
-                deleteCsvFile(context,"eeg_tasting_data.csv")
+                deleteCsvFile(context, "eeg_tasting_data.csv")
             }
 
             is TastingEvent.ShareEEGCsv -> {
-                shareCsvFile(context,"eeg_tasting_data.csv")
+                shareCsvFile(context, "eeg_tasting_data.csv")
             }
 
             is TastingEvent.DeleteEDACsv -> {
-                deleteCsvFile(context,"eda_data.csv")
+                deleteCsvFile(context, "eda_data.csv")
             }
+
             is TastingEvent.DeleteHRCsv -> {
-                deleteCsvFile(context,"heart_rate_data.csv")
+                deleteCsvFile(context, "heart_rate_data.csv")
             }
+
             is TastingEvent.ShareEDACsv -> {
-                shareCsvFile(context,"eda_data.csv")
+                shareCsvFile(context, "eda_data.csv")
             }
+
             is TastingEvent.ShareHRCsv -> {
-                shareCsvFile(context,"heart_rate_data.csv")
+                shareCsvFile(context, "heart_rate_data.csv")
             }
 
             is TastingEvent.ShowLogoutDialog -> {
@@ -148,6 +151,10 @@ class TastingViewModel @Inject constructor(
 
             is TastingEvent.ConfirmLogout -> {
                 performLogout()
+            }
+
+            is TastingEvent.PreviewCheckboxClicked -> {
+                _state.value = _state.value.copy(previewMode = !_state.value.previewMode)
             }
         }
     }
@@ -206,49 +213,50 @@ class TastingViewModel @Inject constructor(
                     _state.value = _state.value.copy(rating = "")
                     return@launch
                 }
+                if(!_state.value.previewMode) {
+                    val file = File(context.getExternalFilesDir(null), "eeg_tasting_data.csv")
+                    val (sampleNumber, experimentNumber) = getExperimentMetaData(file)
 
-                val file = File(context.getExternalFilesDir(null),"eeg_tasting_data.csv")
-                val experimentNumber = getExperimentNumber(file)
+                    val rows = buffer.mapIndexed { index, sd ->
+                        listOf(
+                            (sampleNumber + index).toString(),
+                            sd.channel1.toString(),
+                            sd.channel2.toString(),
+                            sd.channel3.toString(),
+                            sd.channel4.toString(),
+                            sd.channel5.toString(),
+                            sd.channel6.toString(),
+                            experimentNumber.toString(),
+                            subject,
+                            rating.toString()
+                        ).joinToString(",")
+                    }
 
-                val rows = buffer.map { sd ->
-                    listOf(
-                        sd.numberOfMeasurement.toString(),
-                        sd.channel1.toString(),
-                        sd.channel2.toString(),
-                        sd.channel3.toString(),
-                        sd.channel4.toString(),
-                        sd.channel5.toString(),
-                        sd.channel6.toString(),
-                        experimentNumber.toString(),
-                        subject,
-                        rating.toString()
-                    ).joinToString(",")
-                }
+                    if (!file.exists()) {
+                        file.appendText("sample,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating")
+                    }
+                    file.appendText(rows.joinToString("\n", "\n"))
 
-                if (!file.exists()) {
-                    file.appendText("packet,ch1,ch2,ch3,ch4,ch5,ch6,experiment,subject,rating")
-                }
-                file.appendText(rows.joinToString("\n","\n"))
-
-                if(heartRateBuffer.isNotEmpty()) {
-                    writeWearableDataToCsv(
-                        context,
-                        "heart_rate_data.csv",
-                        experimentNumber,
-                        subject,
-                        rating.toString(),
-                        heartRateBuffer
-                    )
-                }
-                if(edaBuffer.isNotEmpty()) {
-                    writeWearableDataToCsv(
-                        context,
-                        "eda_data.csv",
-                        experimentNumber,
-                        subject,
-                        rating.toString(),
-                        edaBuffer
-                    )
+                    if (heartRateBuffer.isNotEmpty()) {
+                        writeWearableDataToCsv(
+                            context,
+                            "heart_rate_data.csv",
+                            experimentNumber,
+                            subject,
+                            rating.toString(),
+                            heartRateBuffer
+                        )
+                    }
+                    if (edaBuffer.isNotEmpty()) {
+                        writeWearableDataToCsv(
+                            context,
+                            "eda_data.csv",
+                            experimentNumber,
+                            subject,
+                            rating.toString(),
+                            edaBuffer
+                        )
+                    }
                 }
                 _state.value = _state.value.copy(stage = TastingStage.Done)
                 _state.value = _state.value.copy(sensorData = emptyList())
@@ -262,13 +270,17 @@ class TastingViewModel @Inject constructor(
         }
     }
 
-    private fun getExperimentNumber(file: File): Int {
+    private fun getExperimentMetaData(file: File): Pair<Int, Int> {
         if (!file.exists() || file.readText().isBlank()) {
-            return 1
+            return (0 to 1)
         }
 
         val lastLine = file.readLines().lastOrNull()
-        return lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
+
+        val sampleNumber = lastLine?.split(",")?.getOrNull(0)?.toIntOrNull()?.plus(1) ?: 0
+        val experimentNumber = lastLine?.split(",")?.getOrNull(7)?.toIntOrNull()?.plus(1) ?: 1
+
+        return (sampleNumber to experimentNumber)
     }
 
     private fun deleteCsvFile(context: Context, fileName: String) {

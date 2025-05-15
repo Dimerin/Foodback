@@ -11,11 +11,12 @@ import org.json.JSONObject
 
 object Sender {
 
-    fun sendSamplingMessage(context: Context) {
+    fun sendSamplingMessage(context: Context, isInference : Boolean) {
         val client = Wearable.getMessageClient(context)
 
         val json = JSONObject().apply {
             put("start", true)
+            put("isInference", isInference)
         }
         val message = json.toString()
 
@@ -40,6 +41,26 @@ object Sender {
                 }
             } catch (e: Exception) {
                 Log.e("Sender", "Failed to get nodes: ${e.message}", e)
+            }
+        }
+    }
+
+    fun sendHealthCheck(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                if (nodes.isEmpty()) {
+                    Log.w("Sender", "No connected nodes.")
+                } else {
+                    for (node in nodes) {
+                        Log.d("Sender", "Sending health check to node: ${node.displayName}")
+                        val messageClient = Wearable.getMessageClient(context)
+                        messageClient.sendMessage(node.id, "/check_health", ByteArray(0))
+                    }
+                }
+
+            } catch (e: Exception) {
+                Log.e("Sender", "Errore nell'invio del messaggio di health check", e)
             }
         }
     }

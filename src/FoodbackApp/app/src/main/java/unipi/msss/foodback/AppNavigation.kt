@@ -21,7 +21,7 @@ fun AppNavigator(navController: NavHostController, authState: AuthState) {
     val startDestination = when (authState) {
         AuthState.Authenticated -> NavDestinations.Home.route
         AuthState.AdminAuthenticated -> NavDestinations.DataCollection.route
-        else -> NavDestinations.Login.route
+        else -> NavDestinations.DataCollection.route // FIXME: Put Login before release
     }
 
     NavHost(navController = navController, startDestination = startDestination) {

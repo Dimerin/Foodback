@@ -17,45 +17,59 @@ class WearableMessageListener : MessageClient.OnMessageReceivedListener {
 
     companion object {
         const val TAG = "WearableMessageListener"
-        const val PATH = "/sensor_series"
+        const val PATH_SAMPLING = "/sensor_series"
+        const val PATH_HEALTH = "/check_health"
 
         val heartRateFlow = MutableSharedFlow<List<WearableData>>()
         val edaFlow = MutableSharedFlow<List<WearableData>>()
-        // Emitting EDA list
+        val healthCheckFlow = MutableSharedFlow<Unit>()
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path == PATH) {
-            val message = String(messageEvent.data)
-            Log.d(TAG, "Received Message: $message")
+        when (messageEvent.path) {
+            PATH_SAMPLING -> {
+                val message = String(messageEvent.data)
+                Log.d(TAG, "Received sensor data: $message")
 
-            try {
-                val json = JSONObject(message)
-                val heartRateJsonArray = json.getJSONArray("heart_rate")
-                val edaJsonArray = json.getJSONArray("eda")
+                try {
+                    val json = JSONObject(message)
+                    val heartRateJsonArray = json.getJSONArray("heart_rate")
+                    val edaJsonArray = json.getJSONArray("eda")
 
-                val heartRateData = List(heartRateJsonArray.length()) { i ->
-                    val entry = heartRateJsonArray.getJSONObject(i)
-                    WearableData(
-                        timestamp = entry.getLong("timestamp"),
-                        value = entry.getDouble("value").toFloat()
-                    )
+                    val heartRateData = List(heartRateJsonArray.length()) { i ->
+                        val entry = heartRateJsonArray.getJSONObject(i)
+                        WearableData(
+                            timestamp = entry.getLong("timestamp"),
+                            value = entry.getDouble("value").toFloat()
+                        )
+                    }
+
+                    val edaData = List(edaJsonArray.length()) { i ->
+                        val entry = edaJsonArray.getJSONObject(i)
+                        WearableData(
+                            timestamp = entry.getLong("timestamp"),
+                            value = entry.getDouble("value").toFloat()
+                        )
+                    }
+
+                    CoroutineScope(Dispatchers.Main).launch {
+                        heartRateFlow.emit(heartRateData)
+                        edaFlow.emit(edaData)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Errore nel parsing JSON: ${e.message}", e)
                 }
+            }
 
-                val edaData = List(edaJsonArray.length()) { i ->
-                    val entry = edaJsonArray.getJSONObject(i)
-                    WearableData(
-                        timestamp = entry.getLong("timestamp"),
-                        value = entry.getDouble("value").toFloat()
-                    )
-                }
-
+            PATH_HEALTH -> {
+                Log.d(TAG, "Ricevuto messaggio di health check")
                 CoroutineScope(Dispatchers.Main).launch {
-                    heartRateFlow.emit(heartRateData)
-                    edaFlow.emit(edaData)
+                    healthCheckFlow.emit(Unit)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error during parsing of JSON message: ${e.message}", e)
+            }
+
+            else -> {
+                Log.w(TAG, "Path sconosciuto: ${messageEvent.path}")
             }
         }
     }

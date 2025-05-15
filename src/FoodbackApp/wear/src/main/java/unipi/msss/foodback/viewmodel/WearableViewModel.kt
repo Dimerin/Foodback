@@ -27,7 +27,8 @@ class WearableViewModel(context : Context) : ViewModel() {
     val uiState: StateFlow<WearableUiState> = _uiState
 
     init {
-        sensorRepository.start()
+        Log.d(TAG,"ENTRO In init")
+        //sensorRepository.start()
 
         sensorRepository.latestHeartRate
             .onEach { latestHeartRate ->
@@ -37,6 +38,11 @@ class WearableViewModel(context : Context) : ViewModel() {
         sensorRepository.latestEDA
             .onEach { latestEda ->
                 _uiState.value = _uiState.value.copy(latestEda = latestEda)
+            }
+            .launchIn(viewModelScope)
+        sensorRepository.setRedCircle
+            .onEach { setRedCircle ->
+                _uiState.value = _uiState.value.copy(isCollecting = setRedCircle)
             }
             .launchIn(viewModelScope)
     }
@@ -56,10 +62,26 @@ class WearableViewModel(context : Context) : ViewModel() {
 
     fun saveData(context: Context) {
         try {
-            val collectedHeartRates = sensorRepository.collectedHeartRates
-            val collectedEDA = sensorRepository.collectedEDA
-            val dataToSave =
-            DataSender.sendSensorData(context, collectedHeartRates, collectedEDA)
+            var collectedHeartRates = sensorRepository.collectedHeartRates
+            var collectedEDA = sensorRepository.collectedEDA
+
+            if (collectedEDA.isEmpty()) {
+                val latestEda = _uiState.value.latestEda ?: 0f
+                collectedEDA = collectedEDA.toMutableList().apply {
+                    add(Pair(System.currentTimeMillis(), latestEda))
+                }
+            }
+
+            if (collectedHeartRates.isEmpty()) {
+                val latestHr = _uiState.value.latestHeartRate ?: 0f
+                collectedHeartRates = collectedHeartRates.toMutableList().apply {
+                    add(Pair(System.currentTimeMillis(), latestHr))
+                }
+            }
+
+            val dataToSave = DataSender
+                .sendSensorData(context, collectedHeartRates, collectedEDA)
+
             Log.d(TAG, "Saved Data: $dataToSave")
             sensorRepository.clearData()
         } catch (e: Exception) {
@@ -70,6 +92,5 @@ class WearableViewModel(context : Context) : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        sensorRepository.stop()
     }
 }

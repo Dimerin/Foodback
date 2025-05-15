@@ -5,9 +5,9 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.core.content.ContextCompat.getSystemService
 
-fun createNotificationChannel(context: Context) {
+fun createNotificationChannel(context: Context, channelId: String) {
     val channel = NotificationChannel(
-        "sampling_channel",
+        channelId,
         "Sensors sampling",
         NotificationManager.IMPORTANCE_DEFAULT
     )
