@@ -112,7 +112,7 @@ private fun SignUp(
                 LottieAnimation(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp),
+                        .height(180.dp),
                     composition = rememberLottieComposition(
                         spec = LottieCompositionSpec.RawRes(
                             R.raw.signup_anim
@@ -123,9 +123,9 @@ private fun SignUp(
                 ElevatedCard( elevation = CardDefaults.cardElevation(
                     defaultElevation = 6.dp
                 ),
-                    modifier = Modifier.size(width = 500.dp, height = 750.dp)
+                    modifier = Modifier.size(width = 500.dp, height = 800.dp)
                         .padding(16.dp).
-                        scale(0.9f),
+                        scale(0.8f),
                 ) {
                     Column(
                         modifier = Modifier
@@ -369,33 +369,25 @@ private fun SignUp(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     AnimatedVisibility(visible = state.signupError != null) {
-                        Text(
-                            text = state.signupError.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        )
-                    }
+                            Text(
+                                text = state.signupError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 0.dp, bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                Button(
+                    onClick = {
+                        onEvent(SignUpEvent.SignUpClicked(context = context))
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                        .scale(0.8f),
                 ) {
-                    Button(
-                        onClick = {
-                            onEvent(SignUpEvent.SignUpClicked(context = context, successIconResId = R.drawable.success))
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                            .scale(0.8f),
-                    ) {
-                        Text("Sign Up", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    }
+                    Text("Sign Up", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }

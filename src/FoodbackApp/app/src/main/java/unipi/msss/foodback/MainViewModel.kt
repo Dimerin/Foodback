@@ -10,18 +10,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import unipi.msss.foodback.auth.login.ui.LoginNavigationEvents
+import unipi.msss.foodback.data.SessionManager
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getUserUseCase: GetUserUseCase,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState
-
-    private val _name = MutableStateFlow<String?>(null)
-    val name: StateFlow<String?> = _name
 
     init {
         checkUserSession()
@@ -37,7 +36,11 @@ class MainViewModel @Inject constructor(
         val getUserResult = getUserUseCase()
         when (getUserResult) {
             is NetworkResult.Success<LoginResponse> -> {
-                _name.value = getUserResult.data.name
+                // Save user info to SessionManager
+                sessionManager.userId = getUserResult.data.id
+                sessionManager.userName = getUserResult.data.name
+                sessionManager.userType = getUserResult.data.userType
+                sessionManager.email = getUserResult.data.email
                 if (getUserResult.data.userType == "admin") {
                     println("Logged User is an Admin")
                     _authState.value = AuthState.AdminAuthenticated

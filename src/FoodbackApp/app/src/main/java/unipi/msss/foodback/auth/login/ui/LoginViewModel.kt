@@ -5,6 +5,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import unipi.msss.foodback.auth.login.data.LoginResponse
 import unipi.msss.foodback.auth.login.data.LoginUseCase
 import unipi.msss.foodback.commons.EventStateViewModel
+import unipi.msss.foodback.data.SessionManager
 import unipi.msss.foodback.commons.ViewModelEvents
 import unipi.msss.foodback.data.network.NetworkResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     viewModelEvents: ViewModelEvents<LoginNavigationEvents>,
+    private val sessionManager: SessionManager,
 ) : EventStateViewModel<LoginState, LoginEvent>(),
     ViewModelEvents<LoginNavigationEvents> by viewModelEvents {
 
@@ -65,12 +67,17 @@ class LoginViewModel @Inject constructor(
 
         when (loginResult) {
             is NetworkResult.Success<LoginResponse> -> {
+                // Save user info to SessionManager
+                sessionManager.userId = loginResult.data.id
+                sessionManager.userName = loginResult.data.name
+                sessionManager.userType = loginResult.data.userType
+                sessionManager.email = loginResult.data.email
                 if (loginResult.data.userType == "admin") {
                     // Logcat for debugging
                     println("Admin user logged in")
                     sendEvent(LoginNavigationEvents.AdminAuthenticated)
                 }
-                else{
+                else {
                     sendEvent(LoginNavigationEvents.Authenticated)
                 }
             }

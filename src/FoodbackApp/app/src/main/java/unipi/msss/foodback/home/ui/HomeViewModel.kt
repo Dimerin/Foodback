@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import unipi.msss.foodback.commons.EventStateViewModel
+import unipi.msss.foodback.data.SessionManager
 import unipi.msss.foodback.commons.ViewModelEvents
 import unipi.msss.foodback.home.data.HomeUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,11 +33,14 @@ class HomeViewModel @Inject constructor(
     private val homeUseCase: HomeUseCase,
     viewModelEvents: ViewModelEvents<HomeNavigationEvents>,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val sessionManager: SessionManager,
 ) : EventStateViewModel<HomeState, HomeEvent>(),
     ViewModelEvents<HomeNavigationEvents> by viewModelEvents {
 
-    override val _state: MutableStateFlow<HomeState> = MutableStateFlow(HomeState())
+    override val _state: MutableStateFlow<HomeState> = MutableStateFlow(
+        HomeState(name = sessionManager.userName)
+    )
     private val wearableMessageListener = WearableMessageListener()
     private var healthCheckJob: Job? = null
     private var isReceivingData: Boolean = false

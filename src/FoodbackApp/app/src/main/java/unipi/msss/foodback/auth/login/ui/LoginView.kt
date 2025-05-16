@@ -99,7 +99,7 @@ private fun Login(
             ElevatedCard( elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
             ),
-                modifier = Modifier.size(width = 500.dp, height = 300.dp).padding(16.dp)
+                modifier = Modifier.size(width = 500.dp, height = 350.dp).padding(16.dp)
             ){
                 Column(
                     modifier = Modifier
@@ -175,13 +175,13 @@ private fun Login(
                             )
                         }
                     }
-                }
-                AnimatedVisibility(visible = state.loginError != null) {
-                    Text(
-                        text = state.loginError.orEmpty(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    AnimatedVisibility(visible = state.loginError != null) {
+                        Text(
+                            text = state.loginError.orEmpty(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
 

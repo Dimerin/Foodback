@@ -81,7 +81,7 @@ fun Home(
             TopAppBar(
                 title = { Text("Evaluation") },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { onEvent.invoke(HomeEvent.ShowLogoutDialog) }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ExitToApp,
                             contentDescription = "Logout",
