@@ -20,19 +20,28 @@ class MainViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState
 
+    private val _name = MutableStateFlow<String?>(null)
+    val name: StateFlow<String?> = _name
+
     init {
         checkUserSession()
     }
 
+    /**
+     * Check if the user is logged in and update the authState accordingly.
+     * If the user is an admin, set authState to AdminAuthenticated.
+     * If the user is not logged in, set authState to Unauthenticated.
+     * If the user is logged in but not an admin, set authState to Authenticated.
+     */
     private fun checkUserSession() = viewModelScope.launch {
         val getUserResult = getUserUseCase()
         when (getUserResult) {
             is NetworkResult.Success<LoginResponse> -> {
+                _name.value = getUserResult.data.name
                 if (getUserResult.data.userType == "admin") {
                     println("Logged User is an Admin")
                     _authState.value = AuthState.AdminAuthenticated
-                }
-                else {
+                } else {
                     _authState.value = AuthState.Authenticated
                 }
             }

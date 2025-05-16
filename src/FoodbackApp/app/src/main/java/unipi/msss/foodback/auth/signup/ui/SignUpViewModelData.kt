@@ -45,10 +45,7 @@ sealed class SignUpEvent : ViewEvent {
     data class ConfirmPasswordChanged(val confirmPassword: String) : SignUpEvent()
     data object TogglePasswordVisibility : SignUpEvent()
     data object ToggleConfirmPasswordVisibility : SignUpEvent()
-    data class SignUpClicked(
-        val context: Context,
-        val successIconResId: Int
-    ) : SignUpEvent()
+    data class SignUpClicked(val context: Context) : SignUpEvent()
 }
 
 sealed class SignUpNavigationEvents {

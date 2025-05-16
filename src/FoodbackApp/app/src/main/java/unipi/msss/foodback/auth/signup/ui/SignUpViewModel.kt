@@ -77,13 +77,12 @@ class SignUpViewModel @Inject constructor(
                     updateState(_state.value.copy(signupError = "Passwords do not match"))
                     return
                 }
-
-                signup(event.context, event.successIconResId)
+                signup(event.context)
             }
         }
     }
 
-    private fun signup(context: Context, successIconResId: Int) = viewModelScope.launch {
+    private fun signup(context: Context) = viewModelScope.launch {
         updateState(_state.value.copy(isLoading = true))
 
         val signupObject = SignUpDTO(
@@ -102,7 +101,6 @@ class SignUpViewModel @Inject constructor(
             is NetworkResult.Success<SignupResponse> -> {
                 sendEvent(SignUpNavigationEvents.SignedUp)
                 // Toast with success message
-                // TODO: Try to add success icon (successIconResId) inside the toast
                 Toast.makeText(
                     context,
                     "Account successfully created",

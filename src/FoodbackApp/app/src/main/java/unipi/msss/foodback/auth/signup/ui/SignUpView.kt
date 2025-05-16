@@ -3,7 +3,6 @@ package unipi.msss.foodback.auth.signup.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -99,13 +98,11 @@ private fun SignUp(
             )
         }
     ) { padding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(padding),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
@@ -115,7 +112,7 @@ private fun SignUp(
                 LottieAnimation(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(150.dp),
                     composition = rememberLottieComposition(
                         spec = LottieCompositionSpec.RawRes(
                             R.raw.signup_anim
@@ -386,7 +383,7 @@ private fun SignUp(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(top = 0.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {

@@ -46,7 +46,8 @@ class TastingViewModel @Inject constructor(
     private val wearableMessageListener = WearableMessageListener()
     private val buffer = mutableListOf<SensorData>()
     private var isReceivingData: Boolean = false
-    private var samplingFrequency : Int = 500
+    private var isWatchAlive: Boolean = false
+    private var samplingFrequencyEEG : Int = 500
     private var actualNumberOfMeasurement: Int = 0
     private var job: Job? = null
     private var serverManager: ServerManager? = null
@@ -57,16 +58,26 @@ class TastingViewModel @Inject constructor(
     init {
         startHealthCheck()
         startSession()
-        Wearable.getMessageClient(context).addListener(wearableMessageListener) //FIXME
+        Wearable.getMessageClient(context).addListener(wearableMessageListener)
     }
 
+    /**
+     * This function is used to start the health check process (if devices are available and ready).
+     * It checks if the wearable device is connected and starts the wearable health check.
+     * It checks if the Mindrove EEG is connected and ready to send data.
+     */
     private fun startHealthCheck() {
         healthCheckJob?.cancel()
         healthCheckJob = viewModelScope.launch(ioDispatcher) {
             while (true) {
                 delay(2000L)
                 if(Wearable.getNodeClient(context).connectedNodes.await().isNotEmpty()) {
+                    startWearableHealthCheck()
+                    collectWearableHealthCheck()
+                }
+                if(isWatchAlive) {
                     _state.value = _state.value.copy(isWatchConnected = true)
+                    isWatchAlive = false
                 } else {
                     _state.value = _state.value.copy(isWatchConnected = false)
 
@@ -95,7 +106,6 @@ class TastingViewModel @Inject constructor(
                 _state.value = _state.value.copy(stage = TastingStage.Idle)
 
             }
-
             is TastingEvent.StartProtocol -> {
                 if (!isNetworkAvailable(context) || !state.value.isEEGConnected) {
                     viewModelScope.launch {
@@ -159,6 +169,13 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * This function is used to start the session with the Mindrove EEG server from SDK.
+     * It creates a new instance of the ServerManager class and starts it.
+     * It appends data in the buffer if there is a recording session.
+     * In inference mode, the actualNumberOfMeasurement has to be 1000 samples.
+     * In collection mode, the actualNumberOfMeasurement has to be 5000 samples.
+     */
     private fun startSession() {
         serverManager = ServerManager { sensorData: SensorData ->
             isReceivingData = sensorData.numberOfMeasurement.toInt() != 0
@@ -171,8 +188,16 @@ class TastingViewModel @Inject constructor(
         serverManager?.start()
     }
 
+    /**
+     * This function is used to run the protocol for the tasting session.
+     * It follows the steps of the tasting protocol:
+     * 1. Start the tasting session
+     * 2. Wait for the user to bring the sample to their mouth
+     * 3. Start the recording
+     * 4. Wait for the user to finish tasting
+     * 5. Ask for the rating
+     */
     private fun runProtocol() {
-        collectWearableData()
         job = viewModelScope.launch(ioDispatcher) {
             // First beep
             _state.value = _state.value.copy(stage = TastingStage.BringingToMouth)
@@ -185,8 +210,9 @@ class TastingViewModel @Inject constructor(
             // Second beep
             _state.value = _state.value.copy(stage = TastingStage.Recording)
             buffer.clear()
-            actualNumberOfMeasurement = (TIME_TO_TASTE/1000).toInt() * samplingFrequency
+            actualNumberOfMeasurement = (TIME_TO_TASTE/1000).toInt() * samplingFrequencyEEG
             startWearableSampling()
+            collectWearableData()
             MediaPlayer.create(context, R.raw.beep).apply {
                 setOnCompletionListener { release() }
                 start()
@@ -203,8 +229,13 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * This function is used to submit the rating for the tasting session.
+     * It saves the sensor data to a CSV file if the preview mode is not enabled.
+     * It saves the wearable data to a CSV file if the preview mode is not enabled.
+     * It clears the buffer and updates the state of the view model.
+     */
     private fun submitRating(rating: Int, subject: String) {
-
         viewModelScope.launch(ioDispatcher) {
             try {
                 if (buffer.isEmpty()) {
@@ -270,6 +301,11 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Utility function to get the experiment metadata from the CSV file.
+     * It reads the last line of the file and extracts the sample number and experiment number.
+     * If the file does not exist or is empty, it returns (0, 1).
+     */
     private fun getExperimentMetaData(file: File): Pair<Int, Int> {
         if (!file.exists() || file.readText().isBlank()) {
             return (0 to 1)
@@ -283,6 +319,11 @@ class TastingViewModel @Inject constructor(
         return (sampleNumber to experimentNumber)
     }
 
+    /**
+     * This function deletes the CSV file with the given name.
+     * It checks if the file exists and deletes it.
+     * Used for managing the CSV files created during the tasting session.
+     */
     private fun deleteCsvFile(context: Context, fileName: String) {
         viewModelScope.launch(ioDispatcher) {
             try {
@@ -303,7 +344,12 @@ class TastingViewModel @Inject constructor(
         }
     }
 
-
+    /**
+     * This function shares the CSV file with the given name.
+     * It uses the FileProvider to get the URI of the file and sends a ShareCsvFile event.
+     * It checks if the file exists before sharing it.
+     * Used for sharing the CSV files created during the tasting session.
+     */
     private fun shareCsvFile(context: Context, fileName: String) {
         val file = File(context.getExternalFilesDir(null), fileName)
 
@@ -326,6 +372,10 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * This function checks if the network is available.
+     * It checks if the device is connected has the WI-FI connection active.
+     */
     private fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -335,15 +385,23 @@ class TastingViewModel @Inject constructor(
                 (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
     }
 
+    /**
+     * This function performs the logout operation.
+     * It calls the logout method from the tasting use case and updates the state of the view model.
+     */
     private fun performLogout() = viewModelScope.launch {
         tastingUseCase.logout()
         updateState(_state.value.copy(showLogoutDialog = false))
         sendEvent(LoggedOut)
     }
 
+    /**
+     * This function sends a message to the wearable device to start the sampling process.
+     * It handles any exceptions that may occur during the process and sends an error event if needed.
+     */
     private fun startWearableSampling() {
         try {
-            Sender.sendSamplingMessage(context)
+            Sender.sendSamplingMessage(context, false)
 
         } catch (e: Exception) {
             viewModelScope.launch {
@@ -354,6 +412,10 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * This function is used to collect wearable data from the wearable device.
+     * It collects heart rate and EDA data from the wearable device.
+     */
     private fun collectWearableData() {
         viewModelScope.launch {
             WearableMessageListener.heartRateFlow.collect { heartRates ->
@@ -376,8 +438,40 @@ class TastingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * This function sends a message to the wearable device to start the health check.
+     * It handles any exceptions that may occur during the process and sends an error event if needed.
+     */
+    private fun startWearableHealthCheck(){
+        try {
+            Sender.sendHealthCheck(context)
 
-    fun writeWearableDataToCsv(
+        } catch (e: Exception) {
+            viewModelScope.launch {
+                sendEvent(Error("Error starting wearable sampling: ${e.message}"))
+                _state.value.copy(stage = TastingStage.Idle)
+                return@launch
+            }
+        }
+    }
+
+    /**
+     * This function collects the health check data from the wearable device.
+     * It updates the state of the view model based on the health check data received.
+     */
+    private fun collectWearableHealthCheck(){
+        viewModelScope.launch {
+            WearableMessageListener.healthCheckFlow.collect { healthCheck ->
+                isWatchAlive = true
+            }
+        }
+    }
+
+    /**
+     * This function writes the wearable data to a CSV file.
+     * It appends the data to the file if it exists, or creates a new file if it doesn't.
+     */
+    private fun writeWearableDataToCsv(
         context: Context,
         fileName: String,
         experimentNumber: Int,

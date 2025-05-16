@@ -75,6 +75,11 @@ dependencies {
     implementation("androidx.compose.runtime:runtime:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
+    // TensorFlow LITE
+    implementation ("org.tensorflow:tensorflow-lite:2.11.0")        
+    implementation ("org.tensorflow:tensorflow-lite-support:0.4.3")
+
+
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
