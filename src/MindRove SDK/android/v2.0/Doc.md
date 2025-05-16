@@ -164,7 +164,7 @@ import mylibrary.mindrove.ServerManager
 class MainActivity : ComponentActivity() {
     private val serverManager = ServerManager { sensorData: SensorData ->
         // Update the sensor data text
-        sensorDataText.postValue(sensorData.accelerationX.toString())
+        sensorDataText.postValue(sensorData.channel1.toString())
     }
 
     private val sensorDataText = MutableLiveData("No data yet")
