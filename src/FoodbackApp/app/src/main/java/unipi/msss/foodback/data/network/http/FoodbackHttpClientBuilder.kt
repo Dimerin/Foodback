@@ -46,7 +46,7 @@ class FoodbackHttpClientBuilder @Inject constructor(
             expectSuccess = true
 
             engine {
-                connectTimeout = 5000
+                connectTimeout = 1500
                 socketTimeout = 5000
             }
 

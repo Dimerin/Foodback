@@ -130,6 +130,8 @@ class HomeViewModel @Inject constructor(
             }
         }
         serverManager?.start()
+        // Logging serverManager ip address
+        Log.d("ServerManager", "ServerManager IP: ${serverManager?.ipAddress}")
     }
 
     /**
@@ -385,6 +387,8 @@ class HomeViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         serverManager?.stop()
+        // Logging serverManager stop
+        Log.d("ServerManager", "ServerManager stop called")
         job?.cancel()
         classifier.close()
         healthCheckJob?.cancel()
