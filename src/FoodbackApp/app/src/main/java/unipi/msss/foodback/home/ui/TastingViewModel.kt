@@ -54,7 +54,6 @@ class TastingViewModel @Inject constructor(
     private val heartRateBuffer = mutableListOf<WearableData>()
     private val edaBuffer = mutableListOf<WearableData>()
 
-
     init {
         startHealthCheck()
         startSession()
@@ -71,25 +70,31 @@ class TastingViewModel @Inject constructor(
         healthCheckJob = viewModelScope.launch(ioDispatcher) {
             while (true) {
                 delay(2000L)
-                if(Wearable.getNodeClient(context).connectedNodes.await().isNotEmpty()) {
-                    startWearableHealthCheck()
-                    collectWearableHealthCheck()
+                try {
+                    val connectedNodes = Wearable.getNodeClient(context).connectedNodes.await()
+                    if (connectedNodes.isNotEmpty()) {
+                        startWearableHealthCheck()
+                        collectWearableHealthCheck()
+                    } else {
+                        Log.e("WearableAPI", "No wearable devices connected.")
+                    }
+                } catch (e: Exception) {
+                    Log.e("WearableAPI", "Error accessing Wearable API: ${e.message}", e)
+                    sendEvent(Error("${e.message}"))
+                    break
                 }
-                if(isWatchAlive) {
+                if (isWatchAlive) {
                     _state.value = _state.value.copy(isWatchConnected = true)
                     isWatchAlive = false
                 } else {
                     _state.value = _state.value.copy(isWatchConnected = false)
-
                 }
-                if(isReceivingData) {
+                if (isReceivingData) {
                     _state.value = _state.value.copy(isEEGConnected = true)
                     isReceivingData = false
-                }
-                else{
+                } else {
                     _state.value = _state.value.copy(isEEGConnected = false)
                 }
-
             }
         }
     }
