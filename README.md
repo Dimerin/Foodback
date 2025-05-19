@@ -1,49 +1,3 @@
-<style>
-  .contributors-title {
-    text-align: center;
-  }
-
-  .contributors-text {
-    text-align: center;
-  }
-
-  .contributors-container {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    
-  }
-
-  .contributor-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 20px;
-    background: #24292e;
-    color: white;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    transition: background-color 0.3s ease;
-    min-width: 180px;
-  }
-
-  .contributor-card:hover {
-    background-color: #3c4147;
-  }
-
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-  }
-
-  .contributor-name {
-    flex-grow: 1;
-    text-align: center;
-  }
-</style>
 <img src="src/ReadmeExtra/images/Title ligth.webp" alt="Title" style="border-radius: 15px;"/></br>
 
 # Table of Contents
@@ -200,29 +154,13 @@ TODO
 # Contributors
 This project was developed as part of a university course assignment at University of Pisa. Here are the members of the team:
 
-<div class="contributors-container">
-    
-<div>
-  <a id ="T" href="https://github.com/Califfo8" target="_blank" class="contributor-card">
-    <img src="https://github.com/Califfo8.png" alt="Tommaso Califano GitHub avatar" class="avatar">
-    <span class="contributor-name">Tommaso Califano</span>
+  <a href="https://github.com/Califfo8" target="_blank">
+    <img src="https://github.com/Califfo8.png" alt="Tommaso Califano GitHub avatar" width= "40px" height="40px">
+  <a href="https://github.com/giovanniligato" target="_blank">
+    <img src="https://github.com/giovanniligato.png" alt="Giovanni Ligato GitHub avatar"  width= "40px" height="40px">
+  <a href="https://github.com/nicorama06" target="_blank">
+    <img src="https://github.com/nicorama06.png" alt="Nicola Ramacciotti GitHub avatar"  width= "40px" height="40px">
   </a>
-</br>
-  <a href="https://github.com/giovanniligato" target="_blank" class="contributor-card">
-    <img src="https://github.com/giovanniligato.png" alt="Giovanni Ligato GitHub avatar" class="avatar">
-    <span class="contributor-name">Giovanni Ligato</span>
+  <a href="https://github.com/Dimerin" target="_blank">
+    <img src="https://github.com/Dimerin.png" alt="Gabriele Suma GitHub avatar"  width= "40px" height="40px">
   </a>
-</div>
-
-<div>
-  <a href="https://github.com/nicorama06" target="_blank" class="contributor-card">
-    <img src="https://github.com/nicorama06.png" alt="Nicola Ramacciotti GitHub avatar" class="avatar">
-    <span class="contributor-name">Nicola Ramacciotti</span>
-  </a>
-</br>
-  <a href="https://github.com/Dimerin" target="_blank" class="contributor-card">
-    <img src="https://github.com/Dimerin.png" alt="Gabriele Suma GitHub avatar" class="avatar">
-    <span class="contributor-name">Gabriele Suma</span>
-  </a>
-</div>
-</div>
