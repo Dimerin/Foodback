@@ -164,7 +164,10 @@ Two evaluation strategies were tested:
 The likely motivation behind this discrepancy is information leakage in the epoch-level split, caused by overlap of session-specific signals between training and test sets, which artificially inflates performance. Therefore, only the session-level split provides a reliable estimate of the model’s true generalization ability.
 
 # License
-TODO
+This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
+
+You are free to use, modify, and distribute this software under the terms of the GPLv3.
+Please see the `LICENSE` file for the full license text.
 
 # Contributors
 This project was developed as part of a university course assignment at University of Pisa. Here are the members of the team:
