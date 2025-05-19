@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.Foodback" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Splash background color -->
+        <item name="android:windowSplashScreenBackground">@color/black</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="postSplashScreenTheme">@style/Theme.Foodback.PostSplash</item>
+    </style>
+    <style name="Theme.Foodback.PostSplash" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+</resources>

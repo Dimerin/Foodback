@@ -1,4 +1,0 @@
-log/
-*.env
-db_data/
-__pycache__/

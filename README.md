@@ -1,4 +1,4 @@
-<img src="src/ReadmeExtra/images/Title ligth.webp" alt="Title" style="border-radius: 15px;"/></br>
+<img src="Readme Resources/images/Title ligth.webp" alt="Title" style="border-radius: 15px;"/></br>
 
 # Table of Contents
 - [Table of Contents](#table-of-contents)
@@ -7,8 +7,8 @@
 - [Scientific Background](#scientific-background)
 - [System Architecture](#system-architecture)
 - [Installation](#installation)
-  - [Installation via APK](#installation-via-apk)
   - [Building from Source (Android Studio)](#building-from-source-android-studio)
+  - [Flask Server](#flask-server)
 - [Usage](#usage)
   - [🧠 Training Mode](#-training-mode)
   - [⚡ Inference Mode](#-inference-mode)
@@ -39,7 +39,7 @@ Conversely, [Zhang et al.](https://link.springer.com/article/10.1007/s10489-024-
 Our approach integrates smartwatch and EEG data in real-world settings, capturing both physiological and cognitive responses to food. This enables automated, objective, and scalable reviews of food experiences, bridging the gap between lab-grade precision and everyday usability.
 
 # System Architecture
-<img src="src/ReadmeExtra/images/FoodbackArchitecture.webp" alt="Title" style="border-radius: 15px;"/></br>
+<img src="Readme Resources/images/FoodbackArchitecture.webp" alt="Title" style="border-radius: 15px;"/></br>
 
 The system is composed of multiple interconnected components designed to capture, process, and store physiological and neural signals during food consumption in real-world settings.
 
@@ -56,28 +56,9 @@ For the application to function correctly, all three main components must be ins
 * **Wearable Companion App (Wear OS)**
 * **Flask Backend Server (Python)**
 
-The first two components (mobile and wearable apps) can be installed using either of the following methods:
-
-* **Via pre-built APKs**
-* **By building from source using Android Studio**
+The first two components (mobile and wearable apps) can be installed by building from source using Android Studio.
 
 The Flask server must be set up separately by running the Python backend locally or on a remote host. Detailed instructions for each installation method are provided below.
-
-## Installation via APK
-
-1. **Download the latest APKs** from the [Releases](TODO) section.
-2. **Enable installation from unknown sources** on your Android phone and/or Wear OS watch.
-3. **Install the APKs manually**:
-
-   * For the mobile app: transfer and open `TODO.apk` on your Android phone.
-   * For the wearable app: use `adb` to install `TODO.apk` on your watch:
-
-     ```bash
-     adb connect <WATCH_IP_ADDRESS>
-     adb -s <WATCH_IP_ADDRESS> install TODO.apk
-     ```
-
-     > You can find the watch’s IP address under **Developer Options** > **Network** on your Wear OS device.
 
 ## Building from Source (Android Studio)
 We recommend using Android Studio to modify, run, or compile the source code of both the mobile and wearable applications.
@@ -85,16 +66,50 @@ We recommend using Android Studio to modify, run, or compile the source code of 
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/Dimerin/Foodback
+   git clone https://github.com/Dimerin/Foodback.git
    cd Foodback
    ```
 2. **Open the project in Android Studio**.
 3. Choose the module to build:
-
    * `:app` for the Android app
    * `:wear` for the Wear OS companion app
 4. Connect your devices via USB or Wi-Fi.
 5. Press ▶️ **Run**, or generate APKs via **Build > Build Bundle(s) / APK(s)**.
+
+> N.B. Make sure to update the Flask server IP address in the app’s build.gradle file to match the backend host.
+
+## Flask Server
+* Clone the project repository:
+
+  ```bash
+  git clone https://github.com/Dimerin/Foodback.git
+  cd Foodback
+  ```
+
+* Create a `.env` file in `./Application/src/backend`:
+
+  ```env
+    DB_HOST=db
+    DB_USER=user
+    DB_PASSWORD=<password>
+    DB_NAME=foodback_database
+    SECRET_KEY=<secret_key>
+    JWT_SECRET_KEY=<jwt_secret_key>
+  ```
+
+* Start the application:
+
+  ```bash
+  docker-compose up --build
+  ```
+
+* Common management commands:
+
+  * Rebuild and start: `docker-compose up --build`
+  * Start without rebuild: `docker-compose up`
+  * Stop containers: `docker-compose down`
+  * View logs: `docker-compose logs -f`
+
 
 # Usage
 The application can be used in two main modes, depending on the context:
@@ -130,13 +145,13 @@ In **Training Mode**, the application guides the user through a structured proto
 All phases are guided through the user interface, with visual cues and audio signals to assist both the subject and the administrator.
 
 
-<img src="src/ReadmeExtra/images/TastingProtocol.webp" alt="Title" style="border-radius: 15px;"/></br>
-<img src="src/ReadmeExtra/images//TastingProtocol2.webp" alt="Title" style="border-radius: 15px;"/></br>
+<img src="Readme Resources/images/TastingProtocol.webp" alt="Title" style="border-radius: 15px;"/></br>
+<img src="Readme Resources/images//TastingProtocol2.webp" alt="Title" style="border-radius: 15px;"/></br>
 
 ## ⚡ Inference Mode
 In this mode, the data collected from the sensors is immediately processed for inference, generating a score from the pre-trained model. All computations are performed directly on the phone.
 
-<img src="src/ReadmeExtra/images/Evaluation Protocol.webp" alt="Title" style="border-radius: 15px;"/></br>
+<img src="Readme Resources/images/Evaluation Protocol.webp" alt="Title" style="border-radius: 15px;"/></br>
 
 # Result & Evaluation
 The study involved 10 volunteers (aged 16–56) with 45 tasting sessions, generating labeled EEG and smartwatch data paired with self-reported ratings. This multimodal dataset was used to train and validate the model over 1000 epochs with 10% validation split.
