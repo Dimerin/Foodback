@@ -20,7 +20,7 @@ class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
-        handler.postDelayed(runnable, 3000)
+        handler.postDelayed(runnable, 4000)
     }
 
     override fun onDestroy() {

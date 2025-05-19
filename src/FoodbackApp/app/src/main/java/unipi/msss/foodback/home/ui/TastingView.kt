@@ -142,7 +142,10 @@ fun TastingScreen(
 
             Button(
                 onClick = { onEvent(TastingEvent.StartProtocol) },
-                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+")) && !state.protocolRunning && state.isEEGConnected,
+                enabled = state.subject.matches(Regex("[A-Z][a-zA-Z0-9]+"))
+                        && !state.protocolRunning
+                        && state.isEEGConnected
+                        && state.isWatchConnected,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Start Protocol")
