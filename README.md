@@ -10,7 +10,7 @@
   - [Building from Source (Android Studio)](#building-from-source-android-studio)
   - [Flask Server](#flask-server)
 - [Usage](#usage)
-  - [🧠 Training Mode](#-training-mode)
+  - [🧠 Data Collection Mode](#-data-collection-mode)
   - [⚡ Inference Mode](#-inference-mode)
 - [Result \& Evaluation](#result--evaluation)
 - [License](#license)
@@ -47,7 +47,7 @@ The system is composed of multiple interconnected components designed to capture
 * **Smartwatch (Google Pixel Watch 2)**: Records **heart rate** and **electrodermal activity**, providing real-time indicators of emotional arousal.
 * **Mobile Phone**: Acts as the central hub, collecting data from the EEG and smartwatch, running the neural inference model, and providing a user-facing interface.
 * **Backend (Flask)**: Manages communication between the mobile app and the database, handling data processing, API endpoints, and user/session management.
-* **Database (MySQL)**: Stores collected signals, model outputs, and metadata securely, enabling long-term logging and future analysis.
+* **Database (MySQL)**: Stores user data and metadata, supporting authentication and role-based access control.
 
 # Installation
 For the application to function correctly, all three main components must be installed:
@@ -114,14 +114,14 @@ We recommend using Android Studio to modify, run, or compile the source code of 
 # Usage
 The application can be used in two main modes, depending on the context:
 
-* **🧠 Training Mode**
+* **🧠 Data Collection Mode**
   For structured data collection using a guided tasting protocol. This mode is used to build or update the machine learning model.
 
 * **⚡ Inference Mode**
   For real-time evaluation of food experiences using a pre-trained model. This mode is intended for end users.
 
-## 🧠 Training Mode
-In **Training Mode**, the application guides the user through a structured protocol to collect synchronized physiological and neural signals during food tasting. The protocol consists of the following steps:
+## 🧠 Data Collection Mode
+In **Data Collection Mode**, the application guides the user through a structured protocol to collect synchronized physiological and neural signals during food tasting. The protocol consists of the following steps:
 * **Device Initialization**:
   The protocol begins once the **EEG headset** and the **wearable watch** (recording **heart rate** and **electrodermal activity**) are properly connected and actively transmitting data.
 
@@ -136,11 +136,12 @@ In **Training Mode**, the application guides the user through a structured proto
   * EEG signals (brain activity)
   * Heart rate (HR)
   * Electrodermal activity (EDA)
-    These signals represent the subject’s physiological and emotional response to the food.
+  
+  These signals represent the subject’s physiological and emotional response to the food.
 
 * **Rating Phase**:
   A **final beep** indicates the end of the recording.
-  A **rating interface** appears, allowing the **administrator** to enter a subjective evaluation of the subject’s experience, typically using a predefined scale (e.g., liking, intensity, valence).
+  A **rating interface** appears, allowing the **administrator** to enter a subjective evaluation of the subject’s experience, using a rating scale (e.g., 1-5 stars).
 
 All phases are guided through the user interface, with visual cues and audio signals to assist both the subject and the administrator.
 
