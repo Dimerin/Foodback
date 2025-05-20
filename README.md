@@ -78,6 +78,8 @@ We recommend using Android Studio to modify, run, or compile the source code of 
 
 > N.B. Make sure to update the Flask server IP address in the app’s build.gradle file to match the backend host.
 
+> Please ensure that both the EEG device and the smartwatch are connected to ensure proper app functionality.
+
 ## Flask Server
 * Clone the project repository:
 
